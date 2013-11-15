@@ -1,0 +1,4 @@
+project : asio_base, acelib {
+	sharedname = GPSLib
+	macros += GPSLIB_BUILD_DLL
+}

@@ -1,0 +1,4 @@
+project : dcpsexe_with_tcp, asio_base {
+	after += GPSDDSLib
+	libs += GPSDDSLib
+}

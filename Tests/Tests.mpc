@@ -1,0 +1,5 @@
+project : asio_base, aceexe {
+	exename = Tests
+	after += ASIOLib GPSLib
+	libs += ASIOLib GPSLib
+}

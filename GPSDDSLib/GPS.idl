@@ -1,0 +1,61 @@
+#include "tao/LongSeq.pidl"
+
+module GPS {
+
+#pragma DCPS_DATA_TYPE "GPS::PositionData"
+#pragma DCPS_DATA_KEY "GPS::PositionData sensor_id"
+struct PositionData {
+	string sensor_id;
+	unsigned long long date;  // uint64
+    double latitude;
+    double longitude;
+};
+
+#pragma DCPS_DATA_TYPE "GPS::AltitudeData"
+#pragma DCPS_DATA_KEY "GPS::AltitudeData sensor_id"
+struct AltitudeData {
+	string sensor_id;
+	unsigned long long date;  // uint64
+    double altitude;
+};
+
+#pragma DCPS_DATA_TYPE "GPS::CourseData"
+#pragma DCPS_DATA_KEY "GPS::CourseData sensor_id"
+struct CourseData {
+	string sensor_id;
+	unsigned long long date;  // uint64
+    double speed;
+    double course;
+};
+
+struct SatelliteInfo {
+	long prn;
+	long elevation;
+	long azimuth;
+	long snr;
+};
+
+
+typedef sequence<SatelliteInfo> SatelliteInfoSeq;
+
+#pragma DCPS_DATA_TYPE "GPS::SatelliteInfoData"
+#pragma DCPS_DATA_KEY "GPS::SatelliteInfoData sensor_id"
+struct SatelliteInfoData {
+	string sensor_id;
+	SatelliteInfoSeq satelliteInfo;
+};
+
+
+#pragma DCPS_DATA_TYPE "GPS::ActiveSatellitesData"
+#pragma DCPS_DATA_KEY "GPS::ActiveSatellitesData sensor_id"
+struct ActiveSatellitesData {
+	string sensor_id;
+	CORBA::LongSeq activeSatellites;
+	double pdop;
+	double hdop;
+	double vdop;
+};
+
+
+
+};

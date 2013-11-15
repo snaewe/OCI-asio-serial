@@ -3,5 +3,10 @@ workspace {
 	
 	ASIOLib
 	SerialReader
-	SerialWriter	
+	SerialWriter
+	GPSLib
+	GPSDDSLib
+	GPSPublisher
+	GPSSubscriber
+	Tests
 }

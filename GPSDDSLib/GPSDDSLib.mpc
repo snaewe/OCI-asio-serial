@@ -1,0 +1,11 @@
+project : dcps, asio_base {
+    sharedname = GPSDDSLib
+    
+    dynamicflags += GPSDDSLIB_BUILD_DLL    
+    idlflags    += -Wb,export_macro=GPSDDSLib_Export -Wb,export_include=GPSDDSLib_Export.h
+    dcps_ts_flags += -Wb,export_macro=GPSDDSLib_Export
+    
+    TypeSupport_Files {
+        GPS.idl
+    }
+}

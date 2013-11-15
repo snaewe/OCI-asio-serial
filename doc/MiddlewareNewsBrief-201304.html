@@ -1,0 +1,1522 @@
+<!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Strict//EN" "http://www.w3.org/TR/xhtml1/DTD/xhtml1-strict.dtd">
+<html xmlns="http://www.w3.org/1999/xhtml" xml:lang="en" lang="en">
+<head>
+<meta content="text/html; charset=UTF-8" http-equiv="Content-Type" />
+<!-- tbd: modify MONTH and YEAR here here -->
+<title>
+                Object Computing, Inc. - Middleware News Brief -
+                Issue 04, 2013</title>
+<style type="text/css">
+            body {
+                color: rgb(0, 0, 0);
+                background-color: rgb(255, 255, 255);
+                font-family: Verdana, sans-serif;
+                margin-left: 0.25in;
+                margin-right: 0.25in;
+            }
+            a.career {
+                font-weight: bold;
+            }
+            a:hover {
+                color: rgb(0, 0, 255);
+                background-color: rgb(255, 253, 160);
+            }
+            code {
+                font-family: "Courier New", monospace;
+            }
+            div.center {
+                text-align: center;
+            }
+            h1 {
+                text-align: center;
+            }
+            h2 {
+                text-align: left;
+            }
+            h3 {
+                text-align: left;
+            }
+            h4 {
+                text-align: left;
+            }
+            h5 {
+                text-align: left;
+            }
+            hr {
+                height: 1px;
+                color: rgb(0, 0, 0);
+                background-color: transparent;
+            }
+            hr.Color {
+                height: 1px;
+                color: rgb(147, 146, 143);
+                background-color: transparent;
+            }
+            kbd {
+                font-family: "Courier New", monospace;
+            }
+            p {
+        text-align: justify;
+        }
+        p.author {
+        text-align: center;
+        }
+        p.footer {
+        text-align: justify;
+        }
+        p.copyright {
+        text-align: justify;
+        font-size: small;
+        }
+        pre {
+            font-family: "Courier New", monospace;
+            font-size: 90%;
+        }
+        .educationquicklinks {
+        text-align: center;
+        }
+        .quicklinks {
+        text-align: right;
+        }
+        .red {
+        color: rgb(255, 0, 0);
+        background-color: rgb(255, 255, 255);
+        }
+        .green {
+        color: rgb(0, 128, 0);
+        background-color: rgb(255, 255, 255);
+        }
+        .blue {
+        color: rgb(0, 0, 192);
+        background-color: rgb(255, 255, 255);
+        }
+        .code {
+        background-color: #FFFFF0;
+        border: dashed black 1px;
+        padding-left: 10px;
+        }
+        .comment {
+        color: rgb(128,128,128);
+        font-weight: normal;
+        font-style: italic;
+        }
+        img {border:0;}
+        
+        img.center {   display: block;   margin-left: auto;   margin-right: auto; }
+        
+        </style>
+</head>
+<body>
+<div class="quicklinks" id="top">
+<a href="http://www.ociweb.com">Home</a> |
+            <a href="http://www.ociweb.com/mnb">Middleware News Brief Archive</a> |
+            <a href="#ocieducationservices">OCI Education Services</a>
+
+</div>
+<table cellspacing="0" cellpadding="0" border="0" width="100%">
+  <tr>
+    <td><a href="http://www.ociweb.com"><img moz-do-not-send="true" height="120" width="180" src="http://www.ociweb.com/mnb/images/OCILogo.png" alt="" /></a></td>
+    <td><img moz-do-not-send="true" height="58" width="10" src="http://www.ociweb.com/mnb/images/MiddlewareNewsBriefLeft.png" alt="" /></td>
+    <td style="width: 100%;"><img moz-do-not-send="true" height="58" width="100%" src="http://www.ociweb.com/mnb/images/MiddlewareNewsBriefMiddle.png" alt="" /></td>
+    <td><a href="http://www.ociweb.com/mnb"><img moz-do-not-send="true" height="58" width="382" src="http://www.ociweb.com/mnb/images/MiddlewareNewsBriefRight.png" alt="" /></a></td>
+    </tr>
+</table>
+<div>
+<hr class="Color" />
+
+</div>
+
+
+<!-- tbd: add Title and Author here -->
+        <h1>Multi-Platform Serial Interfacing using Boost:</h1>
+        <h1>A GPS Sensor and OpenDDS</h1>
+        <h1>Part II</h1>
+    <p class="author">
+        by<br/>
+            Charles Calkins, Principal Software Engineer 
+            <br/>Object Computing, Inc. (OCI)
+        </p>
+                                
+
+<!-- tbd: Start the Middleware News Brief here -->
+
+<h2>Introduction</h2>
+
+<p>In part I <a href="#ref1">[1]</a> of this article, 
+we used Boost libraries under both Windows and Linux to communicate with a GPS receiver connected to
+a serial port.  Boost Asio <a href="#ref2">[2]</a>
+was used for asynchronous I/O to read data from the receiver in a platform-independent manner, 
+with other Boost libraries in supporting roles.  This article 
+continues the interaction with the GPS receiver by parsing the GPS data, and publishing it
+via OpenDDS <a href="#ref3">[3]</a>.</p>
+
+<p>The source code of the applications presented here is available in the
+<a href="http://www.ociweb.com/mnb/code/mnb201304-code.zip">code archive</a> that accompanies this 
+article.  This code has been tested under 64-bit Windows 7 with Visual Studio 2010 and Boost 1.51, as
+well as under 64-bit Ubuntu 12.10 with gcc 4.7.2 and Boost 1.49.  OpenDDS 3.4 was used under both
+operating systems.  It also requires MPC <a href="#ref4">[4]</a> for its build system, which is 
+included with OpenDDS.</p>
+
+<h2>Parse GPS Sentences</h2>
+
+<p>Now that GPS data can be obtained from the serial port, as shown in part I, 
+the next step is to parse the data.  The NMEA 0183 specification <a href="#ref5">[5]</a>
+defines a set of <i>sentences</i> that are produced by a GPS (or GLONASS <a href="#ref6">[6]</a>) 
+device, sent at 4800 baud, 8 data bits, no parity, 1 stop bit, and with no handshaking.
+Although the official specification is not freely available, the protocol has been documented in a number of places, 
+such as <a href="#ref7">[7]</a> and <a href="#ref8">[8]</a>.  For more information on the GPS system 
+itself and the data that is obtained, please see <a href="#ref9">[9]</a>.</p>
+
+<p>A sentence from a GPS receiver consists of a comma-delimited list of fields.  The first field begins with a dollar sign, 
+followed by the characters GP 
+(a <i>talker ID</i> of GP means that the sentence was produced from a GPS receiver &mdash; a GLONASS device would use GL), followed by three letters indicating
+the type of sentence.  The data provided in the sentence immediately follows.  After the comma-delimited fields, 
+sentences may also contain a checksum expressed as two hexidecimal
+digits, preceded by an asterisk.  The checksum is the 8-bit exclusive OR of the ASCII values of all of the characters between the $ and *.  All sentences,
+whether or not they contain a checksum, end with a CR-LF pair.</p>
+
+<table border="1">
+<tr>
+<td>$</td>
+<td>GP</td>
+<td>xxx</td>
+<td>,</td>
+<td><i>data field</i></td>
+<td>,</td>
+<td><i>data field</i></td>
+<td>,</td>
+<td><i>data field</i></td>
+<td>...</td>
+<td>*nn</td>
+<td>CR LF</td>
+</tr>
+<tr>
+<td style="background-color:#C0C0C0"></td>
+<td colspan="9" align="center">&lt;-- checksum over these bytes --&gt;</td>
+<td colspan="2" style="background-color:#C0C0C0"></td>
+</tr>
+</table>
+
+<p>The Pharos GPS-360 that is used in these articles produces the following sentence types:</p>
+<ul>
+<li>GGA - 3D position and accuracy data</li>
+<li>GLL - Geographic latitude and longitude</li>
+<li>RMC - NMEA's own "Recommended Minimum" GPS data</li>
+<li>GSV - GPS satellites in view</li>
+<li>GSA - GPS dilution of precision and active satellites</li>
+</ul>
+
+<p>We will create a new library, <code>GPSLib</code>, to contain the code that parses these sentences.</p>
+
+<p>Once again, we start with needed Boost libraries (here, ones we have encountered before in part I), and another 
+generated file that contains export macros.</p>
+
+<div class="code">
+<pre>
+// GPSLib/GPSSentenceDecoder.h
+#include &lt;vector&gt;
+#include &lt;boost/asio.hpp&gt;
+#include &lt;boost/function.hpp&gt;
+#include &lt;boost/date_time.hpp&gt;
+#include &lt;boost/thread/mutex.hpp&gt;
+#include &lt;boost/enable_shared_from_this.hpp&gt;
+#include &lt;boost/date_time/gregorian/gregorian.hpp&gt;
+#include "GPSLib_Export.h"
+</pre>
+</div>
+
+<p>We need a structure to store satellite info as obtained from the GSV sentence, which we will need later.</p>
+
+<div class="code">
+<pre>
+namespace GPSLib {
+    class SatelliteInfo {
+    public:
+        int _prn, _elevation, _azimuth, _snr;
+        SatelliteInfo(int prn, int elevation, int azimuth, int snr) :
+        _prn(prn), _elevation(elevation), _azimuth(azimuth), 
+        _snr(snr) {}
+    };
+</pre>
+</div>
+
+<p>The <code>GPSSentenceDecoder</code> class consists of a buffer to store incoming bytes, a mutex to protect it, 
+and a pointer to a <code>boost::asio::strand</code> to be used for message decoding.  Work posted directly to an
+<code>io_service</code> object may be executed in any order, but work posted through a strand is guaranteed to be
+executed in the order it was posted.  In our case, this guarantees that messages are decoded and processed in the same order
+that they arrive by invocations of the <code>Decode()</code> method.
+Lastly, a number of callback functions are provided &mdash; one for each of the message types that are
+decoded, plus one, <code>OnInvalidSentence()</code>, that is called on a decode error.</p>
+
+<div class="code">
+<pre>
+    class GPSLib_Export GPSSentenceDecoder : public 
+             boost::enable_shared_from_this&lt;GPSSentenceDecoder> {
+        std::string _buffer;
+        boost::mutex _bufferMutex;
+        boost::shared_ptr&lt;boost::asio::strand> _decodeStrand;
+        
+        void Decode(boost::asio::io_service &amp;ios, 
+            const std::string &amp;s);
+    public:
+        void AddBytes(boost::asio::io_service &amp;ios, 
+            const std::vector&lt;unsigned char&gt; &amp;buffer, 
+            size_t bufferSize = -1); 
+        boost::function&lt;void (boost::asio::io_service &amp;, 
+            const std::string &amp;)&gt; OnInvalidSentence;
+        boost::function&lt;void (boost::asio::io_service &amp;, 
+            boost::posix_time::time_duration, double, double, int, 
+            int, double, double)&gt; OnGGA;
+        boost::function&lt;void (boost::asio::io_service &amp;, 
+            boost::posix_time::time_duration, double, double, 
+            const std::string &amp;)&gt; OnGLL;
+        boost::function&lt;void (boost::asio::io_service &amp;, 
+            boost::posix_time::time_duration, double, double, double, 
+            double, boost::gregorian::date, 
+            const std::string &amp;)&gt; OnRMC;
+        boost::function&lt;void (boost::asio::io_service &amp;, 
+            int, int, int, const std::vector&lt;SatelliteInfo&gt; &amp;)&gt; OnGSV;
+        boost::function&lt;void (boost::asio::io_service &amp;, 
+            const std::string &amp;, int, const std::vector&lt;int&gt; &amp;, 
+            double, double, double)&gt; OnGSA;
+    };
+}
+</pre>
+</div>
+
+<p>The implementation of <code>GPSSentenceDecoder</code>, as always, begins with the inclusion of various header files.
+For the message decoding, we will use both the Boost Tokenizer <a href="#ref10">[10]</a>
+and Regex <a href="#ref11">[11]</a> libraries.  Tokenizer is useful for splitting
+strings based on particular characters, such as commas, while Regex is used for interpreting formatted strings.  Boost.Bind
+was described in Part I.</p>
+
+<div class="code">
+<pre>
+// GPSLib/GPSSentenceDecoder.cpp
+#include "GPSSentenceDecoder.h"
+#include "Util.h"
+#include &lt;cctype&gt;
+#include &lt;boost/bind.hpp&gt;
+#include &lt;boost/tokenizer.hpp&gt;
+#include &lt;boost/regex.hpp&gt;
+</pre>
+</div>
+
+<p>The <code>AddBytes()</code> method is used to accumulate bytes until an entire sentence is read.  Serial port reads may only contain
+a few bytes at a time, so bytes need to be stored until a full sentence exists in the buffer.  As the protocol contains only non-whitespace ASCII data, 
+only printable characters are added to the buffer, in case line noise or other problems cause obviously corrupted data to be received.</p>
+
+<p>As sentences end with a CR-LF pair, once a CR-LF pair is found, all bytes from the beginning of the buffer up to and including the
+CR-LF are extracted.  A call to the <code>Decode()</code> method, with the sentence as an argument, is posted through the strand.  It is possible
+that some sentences may decode more quickly than others, so this preserves message order.  Also, posting the decode operation allows
+the thread that called <code>AddBytes()</code> to return to its normal processing without needing to wait for one or more messages to
+be decoded.</p>
+
+<div class="code">
+<pre>
+void GPSLib::GPSSentenceDecoder::AddBytes(boost::asio::io_service &amp;ios, 
+    const std::vector&lt;unsigned char&gt; &amp;bufferToAdd, size_t bufferSize) {
+    boost::mutex::scoped_lock lock(_bufferMutex);
+
+    if (_decodeStrand == 0)
+        _decodeStrand = boost::shared_ptr&lt;boost::asio::strand&gt;(
+            new boost::asio::strand(ios));
+
+    // pass bufferSize in case buffer has size greater than the amount 
+    // of meaningful data in it
+    std::for_each(bufferToAdd.begin(), (bufferSize == -1) ? 
+        bufferToAdd.end() : (bufferToAdd.begin() + bufferSize), 
+        [this](const unsigned char &amp;c) {
+        // a sentence is ASCII plus CR-LF, ignore anything out of range
+        if (std::isprint(c) || (c=='\r') || (c == '\n'))  
+            _buffer += c;
+    });
+
+    // tokenize on \r\n which ends a string
+    size_t pos;
+    while ( (pos = _buffer.find("\r\n")) != std::string::npos) {  
+        const std::string s(_buffer.substr(0, pos+2));  // +2 for \r\n
+        _buffer.erase(0, pos+2);
+        _decodeStrand-&gt;post(boost::bind(&amp;GPSSentenceDecoder::Decode, 
+            shared_from_this(), boost::ref(ios), s));  
+    }
+}
+</pre>
+</div>
+
+<p>We need a few functions to assist with the decoding.  These seemed utilitarian enough to be included
+in an anonymous namespace, rather than being methods of <code>GPSSentenceDecoder</code>, but tastes may vary.
+The first of these methods is <code>TokenizeSentence</code>, which uses the Boost Tokenizer library to split the GPS
+sentence into its component parts.  First, the beginning and end of the sentence is found, and if either are
+missing, or are too close together to contain legitimate data, <code>false</code> is returned to indicate a parsing error.</p>
+
+<div class="code">
+<pre>
+namespace {
+    bool TokenizeSentence(const std::string &amp;s, 
+        std::vector&lt;std::string&gt; &amp;tokens) {
+        tokens.clear();
+        const std::string::size_type dollarPos = s.find("$");
+        const std::string::size_type CRLFPos = s.find("\r\n");
+
+        // fail if can't find sentence boundary, or sentence too short
+        if ((dollarPos == std::string::npos) ||
+            (CRLFPos == std::string::npos) ||
+            (CRLFPos - dollarPos &lt; 5)) {
+                return false;
+        }
+</pre>
+</div>
+
+<p>Next, the sentence is examined to see if it has a checksum, and, if it does, test if the checksum is valid.  If the calculated checksum does not match the 
+one supplied in the sentence, <code>false</code> is returned to indicate failure.</p>
+
+<div class="code">
+<pre>
+        std::string::size_type textEndPos = CRLFPos;
+        const std::string::size_type starPos = s.rfind("*");
+        if (starPos != std::string::npos) {
+            // have a checksum, so validate it
+            // checksum is just prior to the CRLF
+            const char expected_checksum_bytes[] = { 
+                s[starPos+1], s[starPos+2], 0 };  
+            const unsigned char expected_checksum = 
+                boost::lexical_cast&lt;GPSLib::byte_from_hex&gt;(
+                    expected_checksum_bytes);
+
+            // +1, since only chars between $ *
+            unsigned char calculated_checksum = 0;
+            std::for_each(s.begin()+dollarPos+1, s.begin()+starPos, 
+                [&amp;calculated_checksum](char c) { 
+                    calculated_checksum^=c; }); 
+
+            // fail if checksum mismatch
+            if (calculated_checksum != expected_checksum)
+                return false;
+
+            textEndPos = starPos;
+        }
+</pre>
+</div>
+
+<p>Although <code>lexical_cast&lt;&gt;</code> itself does not convert between bases, a converter can be supplied 
+<a href="#ref12">[12]</a>.</p>
+
+<div class="code">
+<pre>
+// GPSLib/Util.h
+    class byte_from_hex {
+        unsigned int value;
+    public:
+        operator unsigned char() const { return value &amp; 0xFF; }
+        friend std::istream &amp;operator&gt;&gt;(std::istream &amp;in, 
+            byte_from_hex &amp;out) {
+            in &gt;&gt; std::hex &gt;&gt; out.value;
+            return in;
+        }
+    };
+</pre>
+</div>
+
+
+<p>We now split the sentence into pieces by tokenizing on the comma character.
+The definition of the separator must include <code>boost::keep_empty_tokens</code>, as, by default, empty fields are not preserved.  GPS sentences,
+especially when GPS devices are still initializing and are not yet tracking satellites, can contain empty fields.  As decoding
+sentences relies on the position of fields within the string, not including empty fields causes positions to change and the 
+parse to fail.</p>
+
+<p>We only tokenize the string starting from the dollar sign through the end of the comma-delimited fields &mdash; the
+tokenization range ends at either the character before the asterisk if the sentence contains a checksum, 
+or the character before the CR-LF if it does not.</p>
+
+<p>Once the string is tokenized, the tokens are copied into a buffer to return to the caller, and the function returns true if at least
+one token was found.</p>
+
+<div class="code">
+<pre>
+        const boost::char_separator&lt;char&gt; sep(",", 0, 
+            boost::keep_empty_tokens);
+        const boost::tokenizer&lt;boost::char_separator&lt;char&gt;&gt; t(
+            s.begin()+dollarPos, s.begin()+textEndPos, sep);
+        std::copy(t.begin(), t.end(), std::back_inserter(tokens));
+        
+        // parse is good if there is at least one token
+        return tokens.size()&gt;0;  
+    }
+</pre>
+</div>
+
+<p>As there are multiple sentences which contain elements of similar structure, we can implement decoders for these that
+can be reused.</p>
+
+<p>The first of these parses time-of-day sentence elements.  The parameter to the <code>DecodeTime()</code> function is an iterator into
+the list of tokens, where dereferencing the iterator yields the string token itself.  The Boost Regex library is used to
+parse the token because a time is represented in a fixed format: 2 digits for the hour, 2 digits for the minute, 2 digits
+for the second, and a variable (at least, among different GPS receivers) precision of fractional seconds.  As some receivers
+only include time to the second, this field may be optional, but the Pharos GPS-360 seems to always provide three digits to
+the right of the decimal point.</p>
+
+<p>The regular expression object is created outside of the function as a speed optimization to avoid re-parsing it on each
+function invocation.  <code>boost::regex_match</code> is passed three arguments: the string to parse, an instance
+of <code>boost::smatch</code> to store successful match results, 
+and the regex pattern to compare against.  Upon a successful match, the iterator is incremented, so the next token is ready
+to be parsed.  The <code>boost::smatch</code> object is then consulted for the match results.  The 0<sup>th</sup> 
+match is the entire matched string, followed by the capture groups starting at index 1, so, in our case, the hour is in group 1, 
+minute in group 2, second in group 3, and milliseconds in group 4. 
+<code>boost::lexical_cast&lt;&gt;</code> from the Boost.Lexical_Cast library is used 
+to convert each capture group from its string representation to integer.  The Boost Date_Time library is used to
+represent the time as a composite <code>boost::posix_time::time_duration</code> that is returned to the caller.</p>
+
+<div class="code">
+<pre>
+    const boost::regex hms("(\\d{2})(\\d{2})(\\d{2})(?:(.\\d*))?");
+    boost::posix_time::time_duration DecodeTime(
+        std::vector&lt;std::string&gt;::iterator &amp;i) {
+        boost::smatch m;
+        if (boost::regex_match(*i, m, hms)) {
+            i++;  // consume the match
+            const boost::posix_time::hours hr(
+                boost::lexical_cast&lt;int&gt;(m[1].str()));
+            const boost::posix_time::minutes min(
+                boost::lexical_cast&lt;int&gt;(m[2].str()));
+            const boost::posix_time::seconds sec(
+                boost::lexical_cast&lt;int&gt;(m[3].str()));
+            const boost::lexical_cast&lt;int&gt;(
+                boost::lexical_cast&lt;double&gt;(m[4].str())*1000));
+            return boost::posix_time::time_duration(hr+min+sec+ms);
+        }
+        else
+            throw std::invalid_argument(*i + " is not hms");
+    }
+</pre>
+</div>
+
+<p>Functions similar to the above are used to parse latitude and longitude fields, as well as date fields, the
+implementation of which is not shown here.</p>
+
+<div class="code">
+<pre>
+    double DecodeLatLng(std::vector&lt;std::string&gt;::iterator &amp;i) {
+        ...
+    }
+
+    boost::gregorian::date DecodeDate(
+        std::vector&lt;std::string&gt;::iterator &amp;i) {
+        ...
+    }
+}
+</pre>
+</div>
+
+<p>The <code>Decode()</code> method is passed a GPS sentence to decode, and calls
+<code>TokenizeSentence()</code> to validate it and divide it into pieces.  If the
+tokenization fails, and the user has provided an <code>OnInvalidSentence()</code>
+callback, the callback is invoked with the string that failed the parse as one of its arguments.</p>
+
+<div class="code">
+<pre>
+void GPSLib::GPSSentenceDecoder::Decode(boost::asio::io_service &amp;ios, 
+    const std::string &amp;s) {
+    try {
+        std::vector&lt;std::string&gt; v;
+        if (!TokenizeSentence(s, v)) {
+            if (OnInvalidSentence) 
+                OnInvalidSentence(ios, s);
+            return;
+        }
+</pre>
+</div>
+
+<p><code>Decode()</code> then compares the first token to see if it matches a known sentence type, 
+and, if so, to decode that sentence.  The first test is for the GGA sentence, which looks like:</p>
+
+<div class="code">
+<pre>
+$GPGGA,191630.609,3848.2905,N,09018.4239,W,1,06,1.3,132.0,M,-33.7,M,0.0,0000*48
+</pre>
+</div>
+
+<p>If the iterator, initially at the start of the token list, matches $GPGGA, it is 
+incremented., The time, latitude, and longitude are then parsed via the helper functions
+described above.  Next the fix quality, number of satellites used, horizontal dilution, and altitude
+are converted to numbers from the string representation using the
+<code>lexical_cast_default&lt;&gt;</code> helper function.  If the user has provided an <code>OnGGA()</code>
+callback function, it is invoked with the decoded parameters.</p>
+
+<div class="code">
+<pre>
+        std::vector&lt;std::string&gt;::iterator i = v.begin();
+        if (*i == "$GPGGA") {
+            i++;  // consume the $GPGGA token
+            const boost::posix_time::time_duration time(DecodeTime(i));
+            const double lat = DecodeLatLng(i);
+            const double lng = DecodeLatLng(i);
+            const int quality = lexical_cast_default&lt;int&gt;(*i++, 0);
+            const int numSatellites = 
+                lexical_cast_default&lt;int&gt;(*i++, 0);
+            const double horizontalDilution = 
+                lexical_cast_default&lt;double&gt;(*i++, 0);
+            const double altitude = 
+                lexical_cast_default&lt;double&gt;(*i++, 0);
+
+            if (OnGGA)
+                OnGGA(ios, time, lat, lng, quality, numSatellites, 
+                    horizontalDilution, altitude);
+            return;
+        }
+</pre>
+</div>
+
+<p>The other sentences are parsed similarly, and if the sentence didn't match any of the
+choices, <code>OnInvalidSentence()</code>, if provided, is invoked.</p>
+
+<div class="code">
+<pre>
+        if (*i == "$GPGLL") {
+            ...
+        }
+
+        if (*i == "$GPRMC") {
+            ...
+        }
+
+        if (*i == "$GPGSV") {
+            ...
+        }
+
+        if (*i == "$GPGSA") {
+            ...
+        }
+
+        // didn't parse anything
+        if (OnInvalidSentence) 
+            OnInvalidSentence(ios, s);
+
+    } catch (const std::exception &amp;e) {
+        std::cout &lt;&lt; "Error while decoding &gt;" &lt;&lt; s &lt;&lt; "&lt; : " &lt;&lt; 
+            e.what() &lt;&lt; std::endl;
+        throw;
+    }
+}
+</pre>
+</div>
+
+<p>The <code>lexical_cast_default&lt;&gt;</code> function simply returns a default value if the provided string does not 
+successfully parse, such as when the field is empty.</p>
+
+<div class="code">
+<pre>
+// GPSLib/Util.h
+    template&lt;typename Target&gt;
+    inline Target lexical_cast_default(const std::string &amp;arg, 
+        const Target &amp;def) {
+        try {
+            return boost::lexical_cast&lt;Target&gt;(arg);
+        } catch (boost::bad_lexical_cast &amp;) {
+            return def;
+        }
+    }
+</pre>
+</div>
+
+<h2>Test the GPS Sentence Parser</h2>
+
+<p>With the GPS sentence parser written, it is important to test the parser to ensure that it operates correctly.
+For this, we can use the Boost Test library <a href="#ref13">[13]</a>
+with tests implemented in the <code>Tests</code> project.</p>
+
+<p>We will rely on the test framework that can be automatically provided, rather than defining our own,
+by using the Boost Test macros.  The first macro is 
+<code>BOOST_AUTO_TEST_MAIN</code> which causes a <code>main()</code> function and test runner to be compiled into the
+test executable.  Following this macro, we again include a number of headers to Boost libraries that we have seen
+before, but the Boost Filesystem library <a href="#ref15">[15]</a> makes its first appearance.  The Filesystem library
+includes features such as iteration over directory contents, path construction, and other file operations.</p>
+
+<div class="code">
+<pre>
+// Tests/GPSSentences.cpp
+#define BOOST_AUTO_TEST_MAIN
+
+#include &lt;boost/test/auto_unit_test.hpp&gt;
+#include &lt;boost/filesystem.hpp&gt;
+#include &lt;boost/tuple/tuple.hpp&gt;
+#include &lt;boost/archive/text_iarchive.hpp&gt;
+#include &lt;boost/serialization/vector.hpp&gt;
+#include &lt;fstream&gt;
+#include "../GPSLib/GPSSentenceDecoder.h"
+#include "../GPSLib/Util.h"
+</pre>
+</div>
+
+<p>A number of tests are included, but two are highlighted here.  The first is a test of a particular GGA sentence.
+The <code>BOOST_AUTO_TEST_CASE</code> macro is used to configure the test case and make it available to the test runner.
+</p>
+
+<div class="code">
+<pre>
+BOOST_AUTO_TEST_CASE(GGATest)
+{
+    const std::string s(
+        "$GPGGA,191630.609,3848.2905,N,09018.4239,W,1,06,1.3,132.0,M,-33.7,M,0.0,0000*48\r\n");
+    const boost::shared_ptr&lt;GPSLib::GPSSentenceDecoder&gt; d(
+        new GPSLib::GPSSentenceDecoder);
+</pre>
+</div>
+
+<p>To test the sentence decoding, we create variables, each defaulting to false, representing the invocation of each 
+of the sentence callback functions.  A condition of the test is that only the callback function for the GGA
+sentence should have been called, and no other.</p>
+    
+<div class="code">
+<pre>
+    bool onInvalidSentenceCalled = false, onGGACalled = false, 
+        onGLLCalled = false, onRMCCalled = false,
+        onGSVCalled = false, onGSACalled = false;
+    d->OnInvalidSentence = [&amp;](boost::asio::io_service &amp;ios, 
+        const std::string &amp;s) {
+        onInvalidSentenceCalled = true;
+    };
+</pre>
+</div>
+
+<p>For the GGA sentence, we must ensure that the fields were parsed correctly.  Boost Test macros are used for the
+test assertions.  <code>BOOST_REQUIRE_x</code> macros cause the test to fail if the condition is not met.
+Other macros are available: <code>BOOST_WARN_x</code> logs a warning, and
+<code>BOOST_CHECK_x</code> logs an error, but in both cases the test continues to run.  We desire tests to
+halt on error, so we use <code>BOOST_REQUIRE_x</code>.</p>
+
+<p>The <code>BOOST_REQUIRE_EQUAL</code> macro enforces equality between expected and actual values, while the
+<code>BOOST_REQUIRE_CLOSE</code> macro allows the values to differ within a user-specified percent tolerance,
+which is necessary for the comparison of floating point values.</p>
+
+<div class="code">
+<pre>
+    d->OnGGA = [&amp;](boost::asio::io_service &amp;ios, 
+        boost::posix_time::time_duration time, double latitude, double 
+        longitude, int quality, int numSatellites, 
+        double horizontalDilution, double altitude) {
+        onGGACalled = true;
+        BOOST_REQUIRE_EQUAL(
+            boost::posix_time::duration_from_string("19:16:30.609"), 
+            time);
+        BOOST_REQUIRE_CLOSE(38 +(48.2905/60.0), latitude, 0.01);
+        BOOST_REQUIRE_CLOSE(- (90 + (18.4239/60.0)), longitude, 0.01);
+        BOOST_REQUIRE_EQUAL(1, quality);
+        BOOST_REQUIRE_EQUAL(6, numSatellites);
+        BOOST_REQUIRE_CLOSE(1.3, horizontalDilution, 0.01);
+        BOOST_REQUIRE_CLOSE(132.0, altitude, 0.01);
+    };
+</pre>
+</div>
+
+<p>After establishing the remaining callbacks, the string is fed to the decoder, and <code>run()</code> is called on the
+<code>io_service</code> object to perform the decoding.</p> 
+
+<div class="code">
+<pre>
+    d->OnGLL = [&amp;](boost::asio::io_service &amp;ios, 
+        boost::posix_time::time_duration time, double latitude, 
+        double longitude, const std::string &amp;validity) {
+        onGLLCalled = true;
+    };
+    d->OnRMC = [&amp;](boost::asio::io_service &amp;ios, 
+        boost::posix_time::time_duration time, double latitude, 
+        double longitude, double speed, double course, 
+        boost::gregorian::date date, 
+        const std::string &amp;validity) {
+        onRMCCalled = true;
+    };
+    d->OnGSV = [&amp;](boost::asio::io_service &amp;ios, 
+        int totalMessages, int messageNumber, 
+        int totalSatellitesInView, 
+        const std::vector&lt;GPSLib::SatelliteInfo&gt; &amp;satelliteInfo) {
+        onGSVCalled = true;
+    };
+    d->OnGSA = [&amp;](boost::asio::io_service &amp;ios, 
+        const std::string &amp;mode, int fix, 
+        const std::vector&lt;int&gt; &amp;satellitesInView, 
+        double pdop, double hdop, double vdop) {
+        onGSACalled = true;
+    };
+
+    boost::asio::io_service ios;
+    d->AddBytes(ios, std::vector&lt;unsigned char&gt;(s.begin(), s.end()));
+    ios.run();
+</pre>
+</div>
+
+<p><code>BOOST_REQUIRE</code> takes a boolean predicate, and fails the test if the predicate is false.  We confirm here that only the
+GGA decoding function was called, and no other.  If these were placed in the body of each function, and no callbacks were called, the
+test as a whole would still pass as no assertions to fail the test would be executed.</p>
+
+<div class="code">
+<pre>
+    BOOST_REQUIRE(!onInvalidSentenceCalled);
+    BOOST_REQUIRE(onGGACalled); 
+    BOOST_REQUIRE(!onGLLCalled); 
+    BOOST_REQUIRE(!onRMCCalled); 
+    BOOST_REQUIRE(!onGSVCalled);
+    BOOST_REQUIRE(!onGSACalled);
+}
+</pre>
+</div>
+
+<p>Many other tests are written as the one above, where a particular sentence is provided and the test ensures that
+the sentence is decoded correctly.  The <code>AllSentencesTest</code> is closer to a functional test than
+a unit test.  The contents of the pre-recorded GPS sentence archive are played back, and the test confirms that
+no invalid sentences are identified.  This ensures that out of a large sample of sentences, no sentences were recorded
+that are not covered by the GPS sentence decoder.</p>
+
+<p>Only the <code>OnInvalidSentence()</code> callback is needed, and in addition to setting a boolean indicating
+an invalid sentence was found, it is also displayed to the console so the developer can update the parser accordingly.</p>
+
+<div class="code">
+<pre>
+BOOST_AUTO_TEST_CASE(AllSentencesTest)
+{
+    const boost::shared_ptr&lt;GPSLib::GPSSentenceDecoder&gt; d(
+        new GPSLib::GPSSentenceDecoder);
+    
+    bool onInvalidSentenceCalled = false;
+    d-&gt;OnInvalidSentence = [&amp;](boost::asio::io_service &amp;ios, 
+        const std::string &amp;s) {
+        std::cerr &lt;&lt; "Invalid: &gt;" &lt;&lt; s &lt;&lt; "&lt;" &lt;&lt; std::endl;
+        onInvalidSentenceCalled = true;
+    };
+</pre>
+</div>
+
+<p>We wish to be able to run the test application from any current working directory, 
+but to do so, the test must be able to locate the GPS data archive file.  The data file is located in the 
+<code>Tests</code> directory, while the test executable is located in either the <code>Output/Debug</code>
+or <code>Output/Release</code> directories, depending upon how it was built.</p>
+
+<p>The Boost Filesystem library is used to obtain the full path to the test runner executable.  The
+relative path to the executable is in <code>argv[0]</code>, which is obtained from the Boost test 
+framework because command-line arguments are not directly available to individual test functions.</p>
+
+<div class="code">
+<pre>
+    char **argv = 
+        boost::unit_test::framework::master_test_suite().argv;
+</pre>
+</div>
+
+<p>The function <code>boost::filesystem::system_complete()</code>
+is used to obtain the complete path from the contents of <code>argv[0]</code>.  The <code>Tests</code> directory is two 
+levels above the location of the
+test runner executable, so <code>parent_path()</code> is called three times to find the root directory (once to strip the filename,
+again to remove <code>Debug</code> or <code>Release</code>, and once more to remove <code>Output</code>).  The <code>/=</code>
+operator is overloaded to perform path concatenation using the correct path separator for the operating system.  The
+<code>Tests</code> directory is appended, and then the name of the archive file.</p>
+   
+<div class="code">
+<pre>    
+    // EXE is &lt;root&gt;/Output/Debug/&lt;filename&gt; or 
+    //     &lt;root&gt;/Output/Release/&lt;filename&gt;
+    // get the parent path 3 times to get &lt;root&gt;
+    // add on the path to the data
+    boost::filesystem::path dataPath(
+        boost::filesystem::system_complete(argv[0])
+            .parent_path().parent_path().parent_path());
+    dataPath /= "Tests";
+    dataPath /= "gps_2013-01-15_0106";
+</pre>
+</div>
+
+<p>The archive is then read, with the data passed to the decoder.</p>
+
+<div class="code">
+<pre>
+    std::ifstream in(dataPath.c_str());
+    boost::archive::text_iarchive ia(in);
+    uint64_t us;
+    boost::asio::io_service ios;
+    while (true) {
+        try {
+            std::vector&lt;unsigned char&gt; buffer;
+            ia &gt;&gt; us &gt;&gt; buffer;
+            d-&gt;AddBytes(ios, buffer);
+        } catch (const std::exception &amp;) {
+            // end of archive - ignore exception
+            break;
+        }
+    }
+</pre>
+</div>
+
+<p>After the decoding process is complete, the test ensures that no invalid sentences were identified.</p>
+
+<div class="code">
+<pre>
+    ios.run();
+    BOOST_REQUIRE(!onInvalidSentenceCalled);
+}
+</pre>
+</div>
+
+<h2>Publish the Data with OpenDDS</h2>
+
+<p>With the sentences decoded, we can publish the data as OpenDDS data samples.  The data sample structures
+are expressed in IDL, with the code generated from the IDL compiled in the <code>GPSDDSLib</code> library.</p>
+
+<p>All data samples are identified by the sensor that published them.  The date and time the sample was acquired, if available, 
+is also given, followed by the sensor values.  <code>DCPS_DATA_TYPE</code> identifies that this struct is to be used as an OpenDDS 
+data sample, and <code>DCPS_DATA_KEY</code> specifies that the sensor ID is to be used for instance determination.</p>
+
+<p>The definition of the <code>PositionData</code> sample type is as follows, with 
+<code>AltitudeData</code> and <code>CourseData</code> defined in a similar manner.</p>
+
+<div class="code">
+<pre>
+// GPSLib/GPS.idl
+#include "tao/LongSeq.pidl"
+module GPS {
+
+#pragma DCPS_DATA_TYPE "GPS::PositionData"
+#pragma DCPS_DATA_KEY "GPS::PositionData sensor_id"
+struct PositionData {
+    string sensor_id;
+    unsigned long long date;
+    double latitude;
+    double longitude;
+};
+
+#pragma DCPS_DATA_TYPE "GPS::AltitudeData"
+#pragma DCPS_DATA_KEY "GPS::AltitudeData sensor_id"
+struct AltitudeData {
+    string sensor_id;
+    unsigned long long date;
+    double altitude;
+};
+
+#pragma DCPS_DATA_TYPE "GPS::CourseData"
+#pragma DCPS_DATA_KEY "GPS::CourseData sensor_id"
+struct CourseData {
+    string sensor_id;
+    unsigned long long date;
+    double speed;
+    double course;
+};
+</pre>
+</div>
+
+<p>The <code>SatelliteInfoData</code> structure contains a list of satellites and their attributes, such as a 
+satellite identifier, its position, and the signal-to-noise ratio of the GPS signal.  This is represented as a sequence
+of <code>SatelliteInfo</code> structures.</p>
+
+<div class="code">
+<pre>
+struct SatelliteInfo {
+    long prn;
+    long elevation;
+    long azimuth;
+    long snr;
+};
+
+typedef sequence&lt;SatelliteInfo&gt; SatelliteInfoSeq;
+
+#pragma DCPS_DATA_TYPE "GPS::SatelliteInfoData"
+#pragma DCPS_DATA_KEY "GPS::SatelliteInfoData sensor_id"
+struct SatelliteInfoData {
+    string sensor_id;
+    SatelliteInfoSeq satelliteInfo;
+};
+</pre>
+</div>
+
+<p>The <code>ActiveSatellitesData</code> structure also contains a sequence, but the pre-existing 
+<code>CORBA::LongSeq</code> can be used, rather than defining our own.</p>
+
+<div class="code">
+<pre>
+#pragma DCPS_DATA_TYPE "GPS::ActiveSatellitesData"
+#pragma DCPS_DATA_KEY "GPS::ActiveSatellitesData sensor_id"
+struct ActiveSatellitesData {
+    string sensor_id;
+    CORBA::LongSeq activeSatellites;
+    double pdop;
+    double hdop;
+    double vdop;
+};
+
+};
+</pre>
+</div>
+
+<p>The code generated by the compilation of the IDL is referenced by the <code>GPSPublisher</code> application, as
+well as code that we have seen above.</p>
+
+<div class="code">
+<pre>
+// GPSPublisher/GPSPublisher.cpp
+#include "../GPSDDSLib/GPSTypeSupportC.h"
+#include "../GPSDDSLib/GPSC.h"
+#include "../GPSDDSLib/GPSTypeSupportImpl.h"
+#include "../GPSDDSLib/DDSException.h"
+#include &lt;dds/DCPS/Marked_Default_Qos.h&gt;
+#include &lt;dds/DCPS/Service_Participant.h&gt;
+
+#include "../ASIOLib/Executor.h"
+#include "../ASIOLib/SerialPort.h"
+#include "../GPSLib/GPSSentenceDecoder.h"
+#include &lt;boost/program_options.hpp&gt;
+#include &lt;boost/thread.hpp&gt;
+
+boost::mutex cout_lock;
+void Log(const std::string &amp;msg) {
+    boost::mutex::scoped_lock lock(cout_lock);
+    std::cout &lt;&lt; "[" &lt;&lt; boost::this_thread::get_id() &lt;&lt; "] " &lt;&lt; msg &lt;&lt; 
+        std::endl;
+}
+</pre>
+</div>
+
+<p>Class <code>GPSPublisher</code> is similar to <code>SerialReader</code> in that it obtains data from the serial port.  Additionally, it
+also holds OpenDDS entities for each of the sample data types.</p>
+
+<div class="code">
+<pre>
+class GPSPublisher : public 
+    boost::enable_shared_from_this&lt;GPSPublisher&gt; {
+    boost::shared_ptr&lt;ASIOLib::SerialPort&gt; _serialPort;
+    const std::string _portName;
+    const unsigned int _baudRate;
+    const boost::shared_ptr&lt;GPSLib::GPSSentenceDecoder&gt; _decoder; 
+    const GPS::PositionDataDataWriter_var _positionWriter;
+    const GPS::AltitudeDataDataWriter_var _altitudeWriter;
+    const GPS::CourseDataDataWriter_var _courseWriter;
+    const GPS::SatelliteInfoDataDataWriter_var _satelliteInfoWriter;
+    const GPS::ActiveSatellitesDataDataWriter_var 
+        _activeSatellitesWriter;
+    const boost::posix_time::ptime _epoch;
+</pre>
+</div>
+
+<p>To uniquely identify a sensor, we will use the hostname of the machine that has the serial port, combined with
+the identifier of the port itself.  <code>boost::asio::ip::host_name()</code> returns the host name of the current
+machine as would be used with TCP/IP communication.  This generates a name such as <code>cko:\\.\COM16</code> or
+<code>ako:/dev/ttyUSB0</code>.</p>
+
+<div class="code">
+<pre>
+    std::string GetSensorID() {
+        boost::system::error_code ec;
+        std::string hostName = boost::asio::ip::host_name(ec);
+        if (ec)
+            hostName = "&lt;UNKNOWN&gt;";
+        return hostName + ":" + _portName;
+    }
+</pre>
+</div>
+
+<p>For each of the data types, a helper function assembles the data sample structure, and then
+publishes it by calling <code>write()</code> on the OpenDDS DataWriter that is associated with
+the sample type.  The date provided in the sample is encoded as the number of milliseconds
+between an epoch date of January 1, 1970 and the time that the sample was obtained.</p>
+
+<div class="code">
+<pre>
+    void PublishPosition(boost::posix_time::ptime date, 
+        double latitude, double longitude) {
+        GPS::PositionData sample;
+        sample.sensor_id = GetSensorID().c_str();
+        sample.date = (date-_epoch).total_milliseconds();
+        sample.latitude = latitude;
+        sample.longitude = longitude;
+
+        if (_positionWriter->write(sample, DDS::HANDLE_NIL) != 
+            DDS::RETCODE_OK)
+                throw DDSException("position write() failed");
+    }
+</pre>
+</div>
+
+<p>The helpers to publish altitude and course information are similar, and not shown here.  
+The satellite information helper copies values from a <code>std::vector&lt;&gt;</code> into an OpenDDS sequence.
+First, the sequence length must be set, and then each element is assigned.  When complete, the sample is
+published.  The helper to publish active satellite information is similar.
+</p>
+
+<div class="code">
+<pre>
+    void PublishSatelliteInfo(
+        const std::vector&lt;GPSLib::SatelliteInfo&gt; &amp;satelliteInfo) {
+        GPS::SatelliteInfoData sample;
+        sample.sensor_id = GetSensorID().c_str();
+        sample.satelliteInfo.length(satelliteInfo.size());
+        for (size_t i=0; i&lt;satelliteInfo.size(); i++) {
+            sample.satelliteInfo[i].prn = satelliteInfo[i]._prn;
+            sample.satelliteInfo[i].azimuth = 
+                satelliteInfo[i]._azimuth;
+            sample.satelliteInfo[i].elevation = 
+                satelliteInfo[i]._elevation;
+            sample.satelliteInfo[i].snr = satelliteInfo[i]._snr;
+        }
+
+        if (_satelliteInfoWriter->write(sample, DDS::HANDLE_NIL) != 
+            DDS::RETCODE_OK)
+                throw DDSException("satelliteInfo write() failed");
+    }
+</pre>
+</div>
+
+<p>The remainder of the <code>GPSPublisher</code> class is similar to that of <code>SerialReader</code>
+as developed in Part I of this article, so is not shown here
+in detail, save the <code>OnRead()</code> callback.  The data received by <code>OnRead()</code> is sent to a <code>GPSSentenceDecoder</code> object, and
+as the sentences are decoded and their callbacks are invoked, relevant data samples are published.  For example, the GGA sentence
+publishes position and altitude data samples:</p>
+
+<div class="code">
+<pre>
+    void OnRead(boost::asio::io_service &amp;ios, 
+        const std::vector&lt;unsigned char&gt; &amp;buffer, size_t bytesRead) {
+        _decoder->OnGGA = [&amp;](boost::asio::io_service &amp;ios, 
+            boost::posix_time::time_duration time, double latitude, 
+            double longitude, int quality, int /*numSatellites*/, 
+            double /*horizontalDilution*/, double altitude) {
+            if (quality != 0) { // only post if valid
+                PublishPosition(
+                    boost::posix_time::ptime(_epoch + time), latitude, 
+                    longitude);
+                PublishAltitude(
+                    boost::posix_time::ptime(_epoch + time), altitude);
+            }
+        };
+</pre>
+</div>
+
+<p>The other sentence types are handled similarly.</p>
+   
+<div class="code">
+<pre>   
+		_decoder->OnGLL = [&amp;](boost::asio::io_service &amp;ios, 
+		boost::posix_time::time_duration time, double latitude, 
+		double longitude, const std::string &amp;validity) {
+			if (validity == "A")  // only post if valid
+				PublishPosition(
+				    boost::posix_time::ptime(_epoch + 
+				        time), latitude, longitude);
+		};
+		_decoder->OnRMC = [&amp;](boost::asio::io_service &amp;ios, 
+		    boost::posix_time::time_duration time, 
+		    double latitude, double longitude, double speed, 
+		    double course, boost::gregorian::date date, 
+		    const std::string &amp;validity) {
+			if (validity == "A") {  // only post if valid
+				PublishPosition(
+				    boost::posix_time::ptime(date, 
+				        time), latitude, longitude);
+				PublishCourse(
+				    boost::posix_time::ptime(date, 
+				        time), speed, course);
+			}
+		};
+		_decoder->OnGSV = [&amp;](boost::asio::io_service &amp;ios, 
+		    int /*totalMessages*/, int /*messageNumber*/, 
+		    int /*totalSatellitesInView*/, 
+		    const std::vector&lt;GPSLib::SatelliteInfo&gt; 
+		    &amp;satelliteInfo) {
+			PublishSatelliteInfo(satelliteInfo);
+		};
+		_decoder->OnGSA = [&amp;](boost::asio::io_service &amp;ios, 
+		    const std::string &amp;mode, int fix, 
+		    const std::vector&lt;int&gt; &amp;satellitesInView, 
+		    double pdop, double hdop, double vdop) {
+			PublishActiveSatellites(satellitesInView, pdop, 
+			    hdop, vdop);
+		};
+
+        _decoder-&gt;AddBytes(ios, 
+            std::vector&lt;unsigned char&gt;(buffer.begin(), 
+                buffer.begin()+bytesRead));
+    }
+    
+public:
+    GPSPublisher( /*...*/ ) {}
+    void Create(boost::asio::io_service &amp;ios) { 
+        ...
+    }
+};
+</pre>
+</div>
+
+<p>The creation of the OpenDDS entities for each of the data sample types is done within this template function.
+The type support, type support implementation, and data writer classes for each type are provided, as well
+as the name of the associated topic, and the topic, publisher, and data writer are created.  The entities
+are returned as a Boost tuple.  For details on OpenDDS entities, please see the OpenDDS Developer's Guide
+<a href="#ref15">[15]</a>.
+</p> 
+
+<div class="code">
+<pre>
+template &lt;typename TTypeSupport, typename TTypeSupportImpl, 
+    typename TDataWriter&gt;
+TAO_Objref_Var_T&lt;TDataWriter&gt; CreateWriter(
+    DDS::DomainParticipant_ptr dp, const char *topicName) {
+    TAO_Objref_Var_T&lt;TTypeSupport&gt; ts = new TTypeSupportImpl;
+    if (ts-&gt;register_type(dp, "") != DDS::RETCODE_OK)
+        throw DDSException("reigster_type() failed");
+
+    CORBA::String_var typeName(ts-&gt;get_type_name());
+    DDS::Topic_var topic = dp-&gt;create_topic(topicName, typeName, 
+        TOPIC_QOS_DEFAULT, 0, OpenDDS::DCPS::DEFAULT_STATUS_MASK);
+    if (0 == topic) 
+        throw DDSException("create_topic() failed");
+
+    DDS::Publisher_var pub = dp-&gt;create_publisher(
+        PUBLISHER_QOS_DEFAULT, 0, 
+        OpenDDS::DCPS::DEFAULT_STATUS_MASK);
+    if (0 == pub) 
+        throw DDSException("create_publisher() failed");
+
+    DDS::DataWriterQos dw_qos;
+    pub-&gt;get_default_datawriter_qos(dw_qos);
+    DDS::DataWriter_var dw = pub-&gt;create_datawriter(topic, dw_qos, 0, 
+        OpenDDS::DCPS::DEFAULT_STATUS_MASK);
+    if (0 == dw) 
+        throw DDSException("create_datawriter() failed");
+
+    TAO_Objref_Var_T&lt;TDataWriter&gt; ndw = TDataWriter::_narrow(dw);
+    if (0 == ndw) 
+        throw DDSException("writer _narrow() failed");
+
+    return ndw;
+}
+</pre>
+</div>
+
+<p>In <code>main()</code>, we parse command-line arguments as we have done before, although rather than using
+<code>boost::program_options::parse_command_line()</code>, <code>boost::program_options::command_line_parser()</code>
+is used.  This allows arguments that are unregonized by the parser, such as ones applicable to OpenDDS, to not cause
+argument parsing errors.</p>
+
+<div class="code">
+<pre>
+int main(int argc, char *argv[]) {
+    DDS::DomainParticipantFactory_var dpf;
+    DDS::DomainParticipant_var dp;
+    try {
+      std::string portName, file;
+        int baudRate;
+        boost::program_options::options_description desc("Options");
+        desc.add_options()
+            ("help,h", "help")
+            ("port,p", boost::program_options::value&lt;std::string&gt;(
+                &amp;portName)-&gt;required(), "port name (required)")
+            ("baud,b", boost::program_options::value&lt;int&gt;(
+                &amp;baudRate)-&gt;required(), "baud rate (required)")
+            ;
+    
+        boost::program_options::variables_map vm;
+        boost::program_options::store(
+            boost::program_options::command_line_parser(argc, argv)
+                .options(desc).allow_unregistered().run(), vm);
+    
+        if (vm.empty() || vm.count("help")) {
+            std::cout &lt;&lt; desc &lt;&lt; "\n";
+            return -1;
+        }
+
+        boost::program_options::notify(vm);
+</pre>
+</div>  
+
+<p>We create an OpenDDS domain participant, and using it, create the additional entities for each sample type.</p>
+
+<div class="code">
+<pre>
+        dpf = TheParticipantFactoryWithArgs(argc, argv);
+        dp = dpf-&gt;create_participant(42, PARTICIPANT_QOS_DEFAULT, 0, 
+            OpenDDS::DCPS::DEFAULT_STATUS_MASK);
+        if (0 == dp) 
+            throw DDSException("create_participant() failed");
+
+        const GPS::PositionDataDataWriter_var positionWriter = 
+            CREATE_WRITER(GPS::PositionData)(dp, "GPS_Position");
+        const GPS::AltitudeDataDataWriter_var altitudeWriter = 
+            CREATE_WRITER(GPS::AltitudeData)(dp, "GPS_Altitude");
+        const GPS::CourseDataDataWriter_var courseWriter = 
+            CREATE_WRITER(GPS::CourseData)(dp, "GPS_Course");
+        const GPS::SatelliteInfoDataDataWriter_var 
+            satelliteInfoWriter = 
+            CREATE_WRITER(GPS::SatelliteInfoData)(dp, 
+                "GPS_SatelliteInfo");
+        const GPS::ActiveSatellitesDataDataWriter_var 
+            activeSatellitesInfoWriter = 
+            CREATE_WRITER(GPS::ActiveSatellitesData)(dp, 
+                "GPS_ActiveSatellites");
+</pre>
+</div>
+
+<p>Code is made more readable by using a macro to specify the template parameters.  (Versions of
+OpenDDS newer than May 10<sup>th</sup>, 2013, can obtain these types via nested typedefs instead
+of by macro concatenation &mdash; see the <code>ManyTopicTest</code> of OpenDDS for details.)</p>
+    
+<div class="code">
+<pre>
+#define CREATE_WRITER(X) CreateWriter&lt;X##TypeSupport, X##TypeSupportImpl, X##DataWriter&gt;
+</pre>
+</div>  
+
+<p>The publisher concludes by starting the <code>Executor</code> to begin reading data on the serial port.</p>
+        
+<div class="code">
+<pre>
+        ASIOLib::Executor e;
+        e.OnWorkerThreadError = [](boost::asio::io_service &amp;, 
+            boost::system::error_code ec) { 
+                Log(std::string("GPSPublisher error (asio): ") + 
+                boost::lexical_cast&lt;std::string&gt;(ec)); 
+            };
+        e.OnWorkerThreadException = [](boost::asio::io_service &amp;, 
+            const std::exception &amp;ex) { 
+                Log(std::string("GPSPublisher exception (asio): ") + 
+                    ex.what()); 
+            };
+
+        boost::shared_ptr&lt;GPSPublisher&gt; spd(new GPSPublisher(portName, 
+            baudRate, positionWriter, altitudeWriter, courseWriter, 
+            satelliteInfoWriter, activeSatellitesInfoWriter));
+        e.OnRun = boost::bind(&amp;GPSPublisher::Create, spd, _1);
+        e.Run();
+    } catch (const std::exception &amp;e) {
+        std::cout &lt;&lt; "GPSPublisher exception (main): " &lt;&lt; e.what() &lt;&lt; 
+            std::endl;
+        return -1;
+    } catch (const CORBA::Exception &amp;e) {
+        e._tao_print_exception("GPSPublisher exception (main): ");
+        return -1;
+    } 
+
+    if (0 != dp)
+        dp-&gt;delete_contained_entities();
+    if (0 != dpf)
+        dpf-&gt;delete_participant(dp);
+
+    TheServiceParticipant-&gt;shutdown();
+
+    return 0;
+}
+</pre>
+</div>
+
+<p>The <code>GPSSubscriber</code> application is analagous to <code>GPSPublisher</code>.  Command-line arguments are parsed, and 
+subscriber-side OpenDDS entities are created to receive the published data.  Each OpenDDS DataReader shares the same 
+<code>DataReaderListenerImpl</code> that is invoked whenever a data sample arrives:</p>
+
+<div class="code">
+<pre>
+// GPSSubscriber/GPSSubscriber.cpp
+        DDS::DataReaderListener_var listener(
+            new DataReaderListenerImpl);
+        const GPS::PositionDataDataReader_var positonReader = 
+            CREATE_READER(GPS::PositionData)(dp, listener, 
+            "GPS_Position");
+        const GPS::AltitudeDataDataReader_var altitudeReader =  
+            CREATE_READER(GPS::AltitudeData)(dp, listener, 
+            "GPS_Altitude");
+        const GPS::CourseDataDataReader_var courseReader = 
+            CREATE_READER(GPS::CourseData)(dp, listener, 
+            "GPS_Course");
+        const GPS::SatelliteInfoDataDataReader_var 
+            satelliteInfoReader = 
+            CREATE_READER(GPS::SatelliteInfoData)(dp, listener, 
+            "GPS_SatelliteInfo");
+        const GPS::ActiveSatellitesDataDataReader_var 
+            activeSatellitesInfoReader = 
+            CREATE_READER(GPS::ActiveSatellitesData)(dp, listener, 
+            "GPS_ActiveSatellites");
+</pre>
+</div>
+
+<p>The <code>on_data_available()</code> method of <code>DataReaderListenerImpl</code> narrows the 
+supplied DataReader pointer to each of the sample types in turn, and only if the call to <code>_narrow()</code> was successful
+is the sample displayed.  This allows the one method to service all sample types.</p>
+
+<div class="code">
+<pre>
+void DataReaderListenerImpl::on_data_available(
+    DDS::DataReader_ptr reader) {
+    const boost::posix_time::ptime epoch(
+        boost::gregorian::date(1970, 1, 1));
+    DDS::SampleInfo info;
+
+    GPS::PositionDataDataReader_var positionReader =
+        GPS::PositionDataDataReader::_narrow(reader);
+    if (positionReader) {
+        GPS::PositionData sample;
+        DDS::ReturnCode_t error = 
+            positionReader-&gt;take_next_sample(sample, info);
+        if ((error == DDS::RETCODE_OK) &amp;&amp; info.valid_data) {
+            boost::posix_time::ptime time(epoch + 
+                boost::posix_time::time_duration(
+                boost::posix_time::milliseconds(sample.date)));
+            std::cout &lt;&lt; "Position: " &lt;&lt; sample.sensor_id &lt;&lt; " " &lt;&lt; 
+                time &lt;&lt; " " &lt;&lt; sample.latitude &lt;&lt; " " &lt;&lt; 
+                sample.longitude &lt;&lt; std::endl;
+        }
+        return;
+    }
+
+
+    GPS::AltitudeDataDataReader_var altitudeReader =
+        GPS::AltitudeDataDataReader::_narrow(reader);
+    if (altitudeReader) {
+        ...
+</pre>
+</div>
+
+<p>The <code>run_test.pl</code> script in the <code>Tests</code> directory can be used to demonstrate the system.  The tester must
+ensure that the current directory is either 
+<code>Output/Debug</code> or <code>Output/Release</code> as appropriate, and then invoke the <code>run_test.pl</code> script.
+If <code>run_test.pl</code> is run with no arguments, as follows:</p>
+
+<div class="code">
+<pre>
+> ..\..\Tests\run_test.pl
+</pre>
+</div>
+
+<p>a Windows-based system with the com0com null-modem emulator installed is assumed, as introduced in Part I of this article.  
+An instance of <code>SerialWriter</code> is created to play back the recorded 
+GPS data to \\.\CNCA0, an instance of <code>GPSPublisher</code> is created to read serial data from \\.\CNCB0, and an instance of <code>GPSSubscriber</code>
+created to display sample data as it arrives.</p>  
+
+<p>The script can take two parameters which will be used as the writing and reading ports.  Running the script under Linux with /dev/pts/4
+and /dev/pts/6 arguments, for instance:</p>
+
+<div class="code">
+<pre>
+$ ../../Tests/run_test.pl /dev/pts/4 /dev/pts/6
+</pre>
+</div>
+
+<p>will perform the same test with the data sent through <code>socat</code>, which, as described in the first part of this article, can be invoked
+in a different terminal window as:</p>
+
+<div class="code">
+<pre>
+$ socat -d -d pty,raw,echo=0 pty,raw,echo=0
+2013/01/18 13:29:42 socat[3378] N PTY is /dev/pts/4
+2013/01/18 13:29:42 socat[3378] N PTY is /dev/pts/6
+2013/01/18 13:29:42 socat[3378] N starting data transfer loop with FDs [4,4] and [6,6]
+</pre>
+</div>
+
+<p>Using "none" in place of the first port:</p>
+
+<div class="code">
+<pre>
+$ ../../Tests/run_test.pl none /dev/ttyUSB0
+</pre>
+</div>
+
+<p>instructs the script to not play back data using <code>SerialWriter</code>, allowing data from the real device to be used.</p>
+
+<p>For example, running under Windows without any arguments (so the GPS archive file is replayed) produces output that includes the following:</p>
+
+<div class="code">
+<pre>
+...
+Position: cko:\\.\CNCB0 1970-Jan-01 19:16:45.608000 38.8062 -90.3046
+Altitude: cko:\\.\CNCB0 1970-Jan-01 19:16:45.608000 127.9
+Position: cko:\\.\CNCB0 1970-Jan-01 19:16:45.608000 38.8062 -90.3046
+Active Satellites: cko:\\.\CNCB0 2.2 1.3 1.8 [18 15 29 21 6 9 ]
+Satellite info: cko:\\.\CNCB0 [18,311,62,37][15,49,47,40][14,219,17,26][29,186,11,30]
+Satellite info: cko:\\.\CNCB0 [22,282,30,0][21,221,85,35][24,119,34,23][6,295,24,33]
+Satellite info: cko:\\.\CNCB0 [9,86,34,36][137,0,0,0]
+Position: cko:\\.\CNCB0 2013-Jan-15 19:16:45.608000 38.8062 -90.3046
+Course: cko:\\.\CNCB0 2013-Jan-15 19:16:45.608000 35.5016 55.95
+...
+</pre>
+</div>
+
+<p>where the January 1, 1970 epoch given earlier is used for samples that only include time of day information.</p>
+
+
+<h2>Conclusion</h2>
+
+<p>This article series has shown that writing platform-independent code that interacts with the serial port
+is possible using Boost, as is the ability to post serial-based sensor data as OpenDDS data samples.
+This concept can be applied to any type of sensor &mdash; data is read using Boost Asio, and then published via OpenDDS.</p>
+
+<p>Boost libraries greatly aided the code developed in this article.  While fourteen Boost libraries were used explicitly, 
+Boost provides over a hundred others <a href="#ref16">[16]</a>, giving much support to a C++ programmer.</p>
+
+
+<h2>References</h2>
+
+<p><a name="ref1">[1]</a> Multi-Platform Serial Interfacing using Boost: A GPS Sensor and OpenDDS Part I<br/>
+<a href="http://mnb.ociweb.com/mnb/MiddlewareNewsBrief-201303.html">http://mnb.ociweb.com/mnb/MiddlewareNewsBrief-201103.html</a></p>
+
+<p><a name="ref2">[2]</a> Boost.Asio<br/>
+<a href="http://www.boost.org/doc/libs/1_52_0/doc/html/boost_asio.html">http://www.boost.org/doc/libs/1_52_0/doc/html/boost_asio.html</a></p>
+
+<p><a name="ref3">[3]</a> OpenDDS<br/>
+<a href="http://www.ociweb.com/products/opendds">http://www.ociweb.com/products/opendds</a></p>
+
+<p><a name="ref4">[4]</a> MPC (The Makefile, Project, and Workspace Creator)<br/>
+<a href="http://www.ociweb.com/products/mpc">http://www.ociweb.com/products/mpc</a></p>
+
+<p><a name="ref5">[5]</a> NMEA 0183<br/>
+<a href="http://en.wikipedia.org/wiki/NMEA_0183">http://en.wikipedia.org/wiki/NMEA_0183</a></p>
+
+<p><a name="ref6">[6]</a> GLONASS<br/>
+<a href="http://en.wikipedia.org/wiki/GLONASS">http://en.wikipedia.org/wiki/GLONASS</a></p>
+
+<p><a name="ref7">[7]</a> GPS - NMEA sentence information<br/>
+<a href="http://aprs.gids.nl/nmea">http://aprs.gids.nl/nmea</a></p>
+
+<p><a name="ref8">[8]</a> NMEA data<br/>
+<a href="http://www.gpsinformation.org/dale/nmea.htm">http://www.gpsinformation.org/dale/nmea.htm</a></p>
+
+<p><a name="ref9">[9]</a> GPS-System<br/>
+<a href="http://www.kowoma.de/en/gps/index.htm">http://www.kowoma.de/en/gps/index.htm</a></p>
+
+<p><a name="ref10">[10]</a> tokenizer<br/>
+<a href="http://www.boost.org/doc/libs/1_52_0/libs/tokenizer/index.html">http://www.boost.org/doc/libs/1_52_0/libs/tokenizer/index.html</a></p>
+
+<p><a name="ref11">[11]</a> Boost.Regex<br/>
+<a href="http://www.boost.org/doc/libs/1_52_0/libs/regex/doc/html/index.html">http://www.boost.org/doc/libs/1_52_0/libs/regex/doc/html/index.html</a></p>
+
+<p><a name="ref12">[12]</a> C++ convert hex string to signed integer<br/>
+<a href="http://stackoverflow.com/questions/1070497/c-convert-hex-string-to-signed-integer">http://stackoverflow.com/questions/1070497/c-convert-hex-string-to-signed-integer</a></p>
+
+<p><a name="ref13">[13]</a> Boost Test Library<br/>
+<a href="http://www.boost.org/doc/libs/1_52_0/libs/test/doc/html/index.html">http://www.boost.org/doc/libs/1_52_0/libs/test/doc/html/index.html</a></p>
+
+<p><a name="ref14">[14]</a> Filesystem Library Version 3<br/>
+<a href="http://www.boost.org/doc/libs/1_52_0/libs/filesystem/doc/index.htm">http://www.boost.org/doc/libs/1_52_0/libs/filesystem/doc/index.htm</a></p>
+
+<p><a name="ref15">[15]</a> OpenDDS Developer's Guide<br/>
+<a href="http://downloads.ociweb.com/OpenDDS/OpenDDS-latest.pdf">http://downloads.ociweb.com/OpenDDS/OpenDDS-latest.pdf</a></p>
+
+<p><a name="ref16">[16]</a> Libraries Listed Alphabetically<br/>
+<a href="http://www.boost.org/doc/libs/1_52_0/libs/libraries.htm#Alphabetically">http://www.boost.org/doc/libs/1_52_0/libs/libraries.htm#Alphabetically</a></p>
+
+<!--
+<a href="#ref13">[13]</a>
+-->
+
+
+<!-- tbd: Stop the Middleware News Brief here -->
+
+<hr class="Color" />
+<!--#include virtual="./includes/services.html"-->
+<hr class="Color" />
+<!--#include virtual="./includes/footer.html"-->
+<hr class="Color" />
+<!--#include virtual="./includes/copyright2009.html"-->
+<div class="quicklinks">
+<a href="#top">Top</a>
+</div>
+</body>
+</html>
+
+
+
+
+
+
+
