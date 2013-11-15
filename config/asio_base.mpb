@@ -1,0 +1,41 @@
+project : boost_thread, boost_system, boost_regex, boost_date_time, boost_program_options, boost_serialization, boost_filesystem, boost_unit_test_framework, boost_test_exec_monitor {
+
+  // so "-features boost=1" does not need to be passed on the command line.
+  requires -= boost
+  
+  specific(prop:windows) {
+  		// XP SP2 and higher
+  	    macros += WINVER=0x0502
+    	macros += _WIN32_WINNT=0x0502
+    	
+    	// disable unsafe function warning
+        macros += _SCL_SECURE_NO_WARNINGS
+
+        // decorated name length exceeded, name was truncated
+        DisableSpecificWarnings += 4503
+
+		no_pch = 1
+
+        Release::exeout = ../Output/Release
+        Debug::exeout = ../Output/Debug
+        Release::libout = ../Output/Release
+        Debug::libout = ../Output/Debug
+        Release::dllout = ../Output/Release
+        Debug::dllout = ../Output/Debug        
+        Release::libpaths += ../Output/Release
+        Debug::libpaths += ../Output/Debug
+    }
+
+    specific(make, gnuace) {
+        compile_flags += -std=c++11
+	exeout = ../Output/Release
+	dllout = ../Output/Release
+	libout = ../Output/Release
+	libpaths += ../Output/Release
+    }
+
+	pch_header =
+	pch_source =
+}
+
+

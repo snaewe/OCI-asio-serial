@@ -1,0 +1,4 @@
+project : asio_base, aceexe {
+	after += ASIOLib
+	libs += ASIOLib
+}

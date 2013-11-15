@@ -1,0 +1,1431 @@
+<!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Strict//EN" "http://www.w3.org/TR/xhtml1/DTD/xhtml1-strict.dtd">
+<html xmlns="http://www.w3.org/1999/xhtml" xml:lang="en" lang="en">
+<head>
+<meta content="text/html; charset=UTF-8" http-equiv="Content-Type" />
+<!-- tbd: modify MONTH and YEAR here here -->
+<title>
+                Object Computing, Inc. - Middleware News Brief -
+                Issue 03, 2013</title>
+<style type="text/css">
+            body {
+                color: rgb(0, 0, 0);
+                background-color: rgb(255, 255, 255);
+                font-family: Verdana, sans-serif;
+                margin-left: 0.25in;
+                margin-right: 0.25in;
+            }
+            a.career {
+                font-weight: bold;
+            }
+            a:hover {
+                color: rgb(0, 0, 255);
+                background-color: rgb(255, 253, 160);
+            }
+            code {
+                font-family: "Courier New", monospace;
+            }
+            div.center {
+                text-align: center;
+            }
+            h1 {
+                text-align: center;
+            }
+            h2 {
+                text-align: left;
+            }
+            h3 {
+                text-align: left;
+            }
+            h4 {
+                text-align: left;
+            }
+            h5 {
+                text-align: left;
+            }
+            hr {
+                height: 1px;
+                color: rgb(0, 0, 0);
+                background-color: transparent;
+            }
+            hr.Color {
+                height: 1px;
+                color: rgb(147, 146, 143);
+                background-color: transparent;
+            }
+            kbd {
+                font-family: "Courier New", monospace;
+            }
+            p {
+        text-align: justify;
+        }
+        p.author {
+        text-align: center;
+        }
+        p.footer {
+        text-align: justify;
+        }
+        p.copyright {
+        text-align: justify;
+        font-size: small;
+        }
+        pre {
+            font-family: "Courier New", monospace;
+            font-size: 90%;
+        }
+        .educationquicklinks {
+        text-align: center;
+        }
+        .quicklinks {
+        text-align: right;
+        }
+        .red {
+        color: rgb(255, 0, 0);
+        background-color: rgb(255, 255, 255);
+        }
+        .green {
+        color: rgb(0, 128, 0);
+        background-color: rgb(255, 255, 255);
+        }
+        .blue {
+        color: rgb(0, 0, 192);
+        background-color: rgb(255, 255, 255);
+        }
+        .code {
+        background-color: #FFFFF0;
+        border: dashed black 1px;
+        padding-left: 10px;
+        }
+        .comment {
+        color: rgb(128,128,128);
+        font-weight: normal;
+        font-style: italic;
+        }
+        img {border:0;}
+        
+        img.center {   display: block;   margin-left: auto;   margin-right: auto; }
+        
+        </style>
+</head>
+<body>
+<div class="quicklinks" id="top">
+<a href="http://www.ociweb.com">Home</a> |
+            <a href="http://www.ociweb.com/mnb">Middleware News Brief Archive</a> |
+            <a href="#ocieducationservices">OCI Education Services</a>
+
+</div>
+<table cellspacing="0" cellpadding="0" border="0" width="100%">
+  <tr>
+    <td><a href="http://www.ociweb.com"><img moz-do-not-send="true" height="120" width="180" src="http://www.ociweb.com/mnb/images/OCILogo.png" alt="" /></a></td>
+    <td><img moz-do-not-send="true" height="58" width="10" src="http://www.ociweb.com/mnb/images/MiddlewareNewsBriefLeft.png" alt="" /></td>
+    <td style="width: 100%;"><img moz-do-not-send="true" height="58" width="100%" src="http://www.ociweb.com/mnb/images/MiddlewareNewsBriefMiddle.png" alt="" /></td>
+    <td><a href="http://www.ociweb.com/mnb"><img moz-do-not-send="true" height="58" width="382" src="http://www.ociweb.com/mnb/images/MiddlewareNewsBriefRight.png" alt="" /></a></td>
+    </tr>
+</table>
+<div>
+<hr class="Color" />
+
+</div>
+
+
+<!-- tbd: add Title and Author here -->
+        <h1>Multi-Platform Serial Interfacing using Boost:</h1>
+        <h1>A GPS Sensor and OpenDDS</h1>
+        <h1>Part I</h1>
+    <p class="author">
+        by<br/>
+            Charles Calkins, Principal Software Engineer 
+            <br/>Object Computing, Inc. (OCI)
+        </p>
+                                
+
+<!-- tbd: Start the Middleware News Brief here -->
+
+<h2>Introduction</h2>
+
+<p>Since the early days of the IBM PC, serial ports supporting the RS-232 standard <a href="#ref1">[1]</a>
+have been used to connect external devices to computers.  While physical serial ports may not be as
+commonplace on new hardware as they once were, many devices still provide serial connectivity by
+creating virtual serial ports in the operating system that are associated with USB interfaces.</p>
+
+<p>External modems may be the most familiar serial device, but many devices communicate serially,
+such as bar code scanners, printers, LCD panels and the like <a href="#ref2">[2]</a>
+that are commonly used in the commercial world.  Communicating with these devices is a necessity,
+and, as the machines that they connect to range in architecture, it is important to write code that
+is portable and can be used in different environments.</p>
+
+<p>In this two-part article series, we will use a GPS receiver that supports the NMEA 0183 data specification
+<a href="#ref3">[3]</a> as an example of a serial device with which to communicate.  
+In part I, we will show how to send and receive data over serial ports using the Boost C++ libraries in 
+order to obtain sensor data.  In part II, we will illustrate how to decode
+that data and publish it with OpenDDS <a href="#ref4">[4]</a>.</p>
+
+<p>The source code of the applications presented here is available in the
+<a href="http://www.ociweb.com/mnb/code/mnb201303-code.zip">code archive</a> that accompanies this 
+article.  This code has been tested under 64-bit Windows 7 with Visual Studio 2010 and Boost 1.51, as
+well as under 64-bit Ubuntu 12.10 with gcc 4.7.2 (with the --std=c++11 option) 
+and Boost 1.49.  It uses MPC <a href="#ref5">[5]</a> for its build system.</p>
+
+<h2>Boost Asio</h2>
+
+<p>As serial interfaces are available on a large number of different computer
+architectures, it is useful to write code to read from and write to serial ports
+in a platform-independent way.  For this, we will use the Boost.Asio library
+<a href="#ref6">[6]</a>.</p>
+
+<p>Boost <a href="#ref7">[7]</a> is a set of libraries written in C++ that
+works with many modern C++ compilers.  Members of the C++ Standards Committee
+participate in Boost development <a href="#ref8">[8]</a>, so 
+it is common for features that are part of Boost to later become part of the 
+C++ Standard Library.</p>
+
+<p>As of this writing, the current version of Boost, 1.53.0, contains about 120
+different libraries, covering a wide variety of features.  We will use several of
+these libraries, and begin with Asio.</p>
+
+<p>For more information on Asio, please see <a href="#ref9">[9]</a> and <a href="#ref10">[10]</a>,
+as well as OCI's Boost training course <a href="#ref11">[11]</a>.  In brief,
+Asio provides synchronous and asynchronous function execution.  Functions are posted to a
+<code>boost::asio::io_service</code> object that implements the Proactor
+pattern <a href="#ref12">[12]</a> <a href="#ref13">[13]</a> for asynchronous event dispatch.
+Asio allows user-defined functions to be posted, and provides its own functions for timers, signal handling, and for
+performing synchronous and asynchronous I/O to resources such as devices, files, and
+network ports.  As timers expire, signals are raised, data is available for reading, or worker threads become
+idle, posted functions are serviced, and user-provided callback functions are invoked 
+with the result of the function execution.  A worker thread is a user-created thread
+that calls the <code>run()</code> method of the <code>boost::asio::io_service</code> object.
+This provides a very scalable system based on hardware resources &mdash; the more threads that call
+the <code>run()</code> method, the more threads are available to service functions that have been posted.
+If the number of threads is created based on automatic determination of hardware resources, the application
+will automatically scale, even without recompilation, as improved hardware is used.</p>
+
+<p>We will encapsulate this functionality in the <code>Executor</code> class, in the library <code>ASIOLib</code>.
+The file <code>Executor.h</code> begins as follows:</p>
+
+<div class="code">
+<pre>
+// ASIOLib/Executor.h
+#include &lt;boost/asio.hpp&gt;
+#include &lt;boost/function.hpp&gt;
+#include "ASIOLib_Export.h"
+</pre>
+</div>
+
+<p>The header file for Asio is included, as well as for Function
+<a href="#ref14">[14]</a>.  The Boost.Function library
+contains function object wrappers which we will use to store callback functions that will later be invoked.</p>
+<hr/>
+<h3>SIDEBAR</h3>
+<p>Some libraries used in this article, such as Function, are now included as part of the C++ Standard Library.  The equivalent Boost
+libraries are used in this article to illustrate the functionality that is available in Boost, as well as to
+aid in supporting older compilers.</p>
+<hr/>
+
+<p><code>ASIOLib_Export.h</code> contains various symbols to assist with the exporting
+of symbols from shared libraries, and while the macros that it contains can be created by hand,
+this file was generated by the script:</p>
+
+<div class="code">
+<pre>
+generate_export_file.pl ASIOLib
+</pre>
+</div>
+
+<p>The <code>generate_export_file.pl</code> script is part of the ACE and TAO distribution
+that is needed to build OpenDDS.</p>
+
+<p>We define the class by specifying one of the generated export macros, and by inheriting
+from <code>boost::noncopyable</code>.</p>
+
+<div class="code">
+<pre>
+namespace ASIOLib {
+    class ASIOLib_Export Executor : private boost::noncopyable {
+</pre>
+</div>
+
+<p>For <code>ASIOLib_Export</code> to represent an export
+operation, the <code>ASIOLIB_BUILD_DLL</code> symbol is defined in the build parameters for the <code>ASIOLib</code> project.  When
+not defined, as with code that uses <code>ASIOLib</code>,
+<code>ASIOLib_Export</code> represents a library import.</p>
+
+<p><code>boost::noncopyable</code> provides private copy and assignment operators to ensure that
+this class, and anything derived from it, cannot be copied.  As this class represents a thread pool,
+the copy operation is not appropriate.</p>
+        
+<p>Next, we provide the <code>boost::asio::io_service</code> object, and a method that will be called
+by Asio for each instance of <code>run()</code> that is invoked.</p>
+
+<div class="code">
+<pre>
+    protected:
+        boost::asio::io_service _ioService;
+        void WorkerThread(boost::asio::io_service &amp;io_service);
+</pre>
+</div>
+
+<p>Callback functions are provided which will be invoked at interesting points of the execution.</p>
+
+<div class="code">
+<pre>
+    public:
+        boost::function&lt;void (boost::asio::io_service &amp;)&gt; 
+            OnWorkerThreadStart;  
+        boost::function&lt;void (boost::asio::io_service &amp;)&gt; 
+            OnWorkerThreadStop;
+        boost::function&lt;void (boost::asio::io_service &amp;, 
+            boost::system::error_code)&gt; OnWorkerThreadError;
+        boost::function&lt;void (boost::asio::io_service &amp;, 
+            const std::exception &amp;)&gt; OnWorkerThreadException;
+        boost::function&lt;void (boost::asio::io_service &amp;)&gt; OnRun;
+</pre>
+</div>
+
+<p>Finally, <code>AddCtrlCHandling()</code> is used to intercept the pressing of Ctrl-C, <code>Run()</code> to
+start the <code>Executor</code>, and an accessor is provided for the <code>io_service</code> object.</p>
+
+<div class="code">
+<pre>
+        boost::asio::io_service &amp;GetIOService() { return _ioService; }
+        void AddCtrlCHandling();
+        void Run(unsigned int numThreads = -1);
+    };
+}
+</pre>
+</div>
+
+<p>The implementation of <code>Executor</code> is as follows.  The headers included are the one above, and for
+the Boost.Thread library <a href="#ref15">[15]</a>.  Boost.Thread provides portable threads and synchronization objects.</p>
+
+<div class="code">
+<pre>
+// ASIOLib/Executor.cpp
+#include "Executor.h"
+#include &lt;boost/thread.hpp&gt;
+</pre>
+</div>
+
+<p>The <code>Run()</code> method of <code>Executor</code> establishes a thread pool to call the <code>run()</code> method
+of <code>io_service</code> via the <code>Executor::WorkerThread()</code> method.</p>
+
+<div class="code">
+<pre>
+void ASIOLib::Executor::Run(unsigned int numThreads) {
+    if (OnRun)
+        OnRun(_ioService);
+
+    boost::thread_group workerThreads;
+    for (unsigned int i = 0;
+        i &lt; ((numThreads == (unsigned int)-1) ? 
+          (boost::thread::hardware_concurrency()) : 
+          numThreads); 
+        ++i)
+        workerThreads.create_thread(boost::bind(
+            &amp;Executor::WorkerThread, this, boost::ref(_ioService)));
+    workerThreads.join_all();
+}
+</pre>
+</div>
+
+<p>Before the thread pool is created, the <code>OnRun()</code> callback function is invoked if it is supplied.
+The user of <code>Executor</code> can use this function to provide <code>io_service</code> initialization, such
+as to queue work to perform (functions to execute).</p>
+
+<p>The user specifies the number of threads to create, but if the default of -1 is used, the number of threads
+is set to the number of physical execution units (typically the number of CPUs or cores) as obtained by 
+<code>boost::thread::hardware_concurrency()</code>.  <code>boost::bind()</code>, from the Boost.Bind library <a href="#ref16">[16]</a>,
+is used to associate arguments with functions.
+Here, the function to call, <code>WorkerThread()</code> is a class member, so a pointer to an object
+(<code>this</code>, in our case) must be supplied.  The remaining arguments to <code>boost::bind()</code> are arguments
+to pass to the function, which, in this case, is just the <code>io_service</code> object passed by reference.</p>
+
+<p>After all threads are created, <code>Run()</code> blocks, waiting for them to terminate, via the call to 
+<code>join_all()</code> on the thread group.</p>
+
+<p>The <code>WorkerThread()</code> method wraps the call to <code>io_service.run()</code>.</p>
+
+<div class="code">
+<pre>
+void ASIOLib::Executor::WorkerThread(boost::asio::io_service &amp;ios) {
+    if (OnWorkerThreadStart)
+        OnWorkerThreadStart(ios);
+
+    while (true) {
+        try
+        {
+            boost::system::error_code ec;
+            ios.run(ec);
+            if (ec &amp;&amp; OnWorkerThreadError)
+                OnWorkerThreadError(ios, ec);
+            break;
+        }
+        catch(const std::exception &amp;ex) {
+            if (OnWorkerThreadException)
+                OnWorkerThreadException(ios, ex);
+        }
+    }
+
+    if (OnWorkerThreadStop)
+        OnWorkerThreadStop(ios);
+}
+</pre>
+</div>
+
+<p>As with <code>OnRun()</code>, user-specified callbacks are invoked when <code>WorkerThread()</code> starts and stops, 
+as well as when errors are trapped.  Passing an <code>boost::system::error_code</code> object to <code>run()</code> causes
+Asio to return its own errors via the code, but work that is serviced through Asio may throw its own exceptions, so a
+try/catch block is necessary.  Also, on error or exeception, <code>run()</code> will exit, so must be invoked again
+to resume processing, otherwise the <code>WokerThread()</code> method will return and the worker thread will
+terminate.  Here, <code>run()</code> is called again if an exception is raised by a work item so processing can continue for additional work items, 
+but is not called again when an Asio error is generated.  This also allows the loop to exit when <code>run()</code> is terminated normally by a call to 
+<code>boost::asio::io_service::stop()</code>.</p>
+
+<p>The <code>AddCtrlCHandling()</code> method provides a mechanism for calling <code>boost::asio::io_service::stop()</code>.
+When the process receives a SIGTERM or SIGINT signal (such as when Ctrl-C is pressed), the <code>boost::asio::signal_set</code>
+will be triggered, causing its callback function to be executed.  The callback function that will be
+executed is <code>boost::asio::io_service::stop()</code> itself, providing clean shutdown of Asio.</p>
+
+<div class="code">
+<pre>
+void ASIOLib::Executor::AddCtrlCHandling() {
+    boost::asio::signal_set sig_set(_ioService, SIGTERM, SIGINT);
+    sig_set.async_wait(boost::bind(
+        &amp;boost::asio::io_service::stop, boost::ref(_ioService)));
+}
+</pre>
+</div>
+
+<h2>The Serial Port</h2>
+
+<p>With the <code>Executor</code> complete, we will now define interaction with a serial port.  Asio provides
+<code>boost::asio::serial_port</code> which we will incorporate in our own <code>SerialPort</code>
+class.  As before, a number of headers are included.</p>
+
+<div class="code">
+<pre>
+// ASIOLib/SerialPort.h
+#include &lt;boost/asio.hpp&gt;
+#include &lt;boost/tuple/tuple.hpp&gt;
+#include &lt;boost/thread/mutex.hpp&gt;
+#include &lt;boost/enable_shared_from_this.hpp&gt;
+#include &lt;boost/function.hpp&gt;
+#include "ASIOLib_Export.h"
+</pre>
+</div>
+
+<p>The Boost.Tuple library <a href="#ref17">[17]</a> provides an easy way to create of a fixed-size group of disparate elements.  The
+Boost Smart Pointer library <a href="#ref18">[18]</a> provides reference-counted pointers that delete the pointed-to object when 
+the last smart pointer that referred to it is destroyed.  <code>enable_shared_from_this</code> is part of the Smart Pointer
+library which provides the ability to obtain a shared pointer to the current object from within a member function.</p> 
+
+<p>The configuration of a serial port includes attributes such as character size (typically 7 or 8 bits),
+parity (odd, even or no parity bit used), and the number of stop bits.  For convenience, we define common attribute sets as
+Boost tuples, and create them with <code>boost::make_tuple()</code>.</p>
+
+<div class="code">
+<pre>
+namespace ASIOLib {
+    typedef boost::tuple&lt;
+        boost::asio::serial_port_base::character_size,
+        boost::asio::serial_port_base::parity,
+        boost::asio::serial_port_base::stop_bits&gt; SerialParams;
+
+    static const SerialParams SP_8N1 = boost::make_tuple(
+        8,
+        boost::asio::serial_port_base::parity::none,
+        boost::asio::serial_port_base::stop_bits::one);
+
+    static const SerialParams SP_7E1 = boost::make_tuple(
+        7,
+        boost::asio::serial_port_base::parity::even,
+        boost::asio::serial_port_base::stop_bits::one);
+</pre>
+</div>
+
+<p>The <code>SerialPort</code> class is noncopyable, and supports <code>enable_shared_from_this</code>.  Two buffers
+are maintained: a write buffer for data being written to the serial port, and a read buffer for data being read 
+from it.  These are each protected by a <code>boost::mutex</code>, which is part of the Boost.Thread library.</p>
+
+<div class="code">
+<pre>
+    class ASIOLib_Export SerialPort : private boost::noncopyable, 
+        public boost::enable_shared_from_this&lt;SerialPort&gt;  {
+        boost::asio::serial_port _serialPort;
+        bool _isOpen;
+        boost::system::error_code _errorCode;
+        boost::mutex _errorCodeMutex;
+        std::vector&lt;unsigned char&gt; _readBuffer;
+        boost::function&lt;void (boost::asio::io_service &amp;, 
+            const std::vector&lt;unsigned char&gt; &amp;, size_t)&gt; _onRead;
+
+        std::vector&lt;unsigned char&gt; _writeQueue, _writeBuffer;
+        boost::mutex _writeQueueMutex, _writeBufferMutex;
+</pre>
+</div>
+
+<p>We will implement asynchronous I/O to the serial port.  The <code>ReadBegin()</code> method starts an asynchronous read, and, when data is
+available, <code>ReadComplete()</code> will be called.  Writing is analagous.</p>
+
+<div class="code">
+<pre>
+        boost::system::error_code Flush();
+        void SetErrorCode(const boost::system::error_code &amp;ec);
+        void ReadBegin();
+        void ReadComplete(const boost::system::error_code &amp;ec, 
+            size_t bytesTransferred);
+        void WriteBegin();
+        void WriteComplete(const boost::system::error_code &amp;ec);
+</pre>
+</div>
+
+<p>The public methods of <code>SerialPort</code> provide for its construction, opening and closing, and reading and writing
+of data.</p>
+
+<div class="code">
+<pre>
+    public:
+        SerialPort(boost::asio::io_service &amp;ioService, 
+            const std::string &amp;portName);
+        ~SerialPort();
+        void Open(
+            const boost::function&lt;void (boost::asio::io_service &amp;, 
+                const std::vector&lt;unsigned char&gt; &amp;, size_t)&gt; &amp;onRead,
+            unsigned int baudRate,
+            SerialParams serialParams = SP_8N1,
+            boost::asio::serial_port_base::flow_control flowControl =
+                boost::asio::serial_port_base::flow_control(
+                    boost::asio::serial_port_base::flow_control::none)      
+            );
+        void Close();
+        void Write(const unsigned char *buffer, size_t bufferLength);
+        void Write(const std::vector&lt;unsigned char&gt; &amp;buffer);
+        void Write(const std::string &amp;buffer);
+    };
+};
+</pre>
+</div>
+
+<p>The implementation of the above class begins with the <code>Flush()</code> method.  It can be useful to clear
+all characters pending on the serial port, especially when communication is first begun or upon an error condition.
+This does not appear to be provided by Asio, but can be implemented, as was inspired by this <a href="#ref19">[19]</a>.
+Under Windows, the Win32 <code>PurgeComm()</code> function is invoked, but otherwise <code>tcflush()</code> is called
+to perform an analagous operation under Linux.  Upon error, a <code>boost::system::error_code</code> is returned
+which wraps the system error that was returned.  The number of compilation macros needed for various platforms and the
+alternative code paths code shows why one should rely on a library such as Boost rather than writing multi-platform code by hand.</p>
+
+<div class="code">
+<pre>
+// ASIOLib/SerialPort.cpp
+#include "SerialPort.h"
+#include &lt;boost/bind.hpp&gt;
+
+boost::system::error_code ASIOLib::SerialPort::Flush() {
+    boost::system::error_code ec;
+#if !defined(BOOST_WINDOWS) &amp;&amp; !defined(__CYGWIN__)
+    const bool isFlushed =! ::tcflush(_serialPort.native(), TCIOFLUSH);
+    if (!isFlushed)
+        ec = boost::system::error_code(errno, 
+            boost::asio::error::get_system_category());
+#else
+    const bool isFlushed = ::PurgeComm(_serialPort.native(), 
+        PURGE_RXABORT | PURGE_RXCLEAR | PURGE_TXABORT | PURGE_TXCLEAR);
+    if (!isFlushed)
+        ec = boost::system::error_code(::GetLastError(), 
+            boost::asio::error::get_system_category()); 
+#endif 
+    return ec;
+}
+</pre>
+</div>
+
+<p>The method <code>SetErrorCode()</code> uses a mutex to protect the assignment of the 
+<code>boost::system::error_code</code>, as it is a composite object, and
+<code>SetErrorCode()</code> can be called from multiple threads.</p>
+
+<div class="code">
+<pre>
+void ASIOLib::SerialPort::SetErrorCode(
+    const boost::system::error_code &amp;ec) {
+    if (ec) {
+        boost::mutex::scoped_lock lock(_errorCodeMutex);
+        _errorCode = ec;
+    }
+}
+</pre>
+</div>
+
+<p><code>ReadBegin()</code> invokes the Asio <code>async_read_some()</code> method, passing a buffer to fill with 
+incoming bytes from the port (the buffer is allocated in the constructor &mdash; Asio requires the buffer to have a non-zero length in order to be used), 
+and a callback function, <code>ReadComplete()</code>, to invoke when data has been read.   
+The <code>ReadComplete</code> method takes two parameters: a <code>boost::system::error_code</code> and
+the number of bytes that were copied into the buffer.  We pass a pointer to the current object via a shared
+pointer (as is needed because <code>ReadComplete()</code> is a class member function)
+ as created by <code>shared_from_this()</code> to ensure that the current object still exists at the
+time that the callback function will be invoked on it.</p>
+
+<div class="code">
+<pre>
+void ASIOLib::SerialPort::ReadBegin() {
+    _serialPort.async_read_some(boost::asio::buffer(_readBuffer),
+        boost::bind(&amp;SerialPort::ReadComplete, shared_from_this(),
+        boost::asio::placeholders::error,
+        boost::asio::placeholders::bytes_transferred));
+}
+</pre>
+</div>
+
+<p>When data has arrived on the serial port, <code>ReadComplete()</code> is called.  If no error was generated, 
+and the user-provided <code>OnRead()</code> callback was provided, the callback is invoked with the data
+that was received.  It is presumed that the implementation of <code>OnRead()</code> will copy or process the buffer data before it
+returns, as the next asynchronous read, begun by the call to <code>ReadBegin()</code> following the callback, 
+will overwrite the buffer data.  The application will invoke <code>ReadBegin()</code> only once, 
+and as it is the same thread that begins the next read via the call to <code>ReadBegin()</code> here, 
+it is ensured that only one thread could be accessing the read buffer, so the buffer does not require synchronization.</p>
+
+<div class="code">
+<pre>
+void ASIOLib::SerialPort::ReadComplete(
+    const boost::system::error_code &amp;ec, size_t bytesTransferred) {
+    if (!ec) {
+        if (_onRead &amp;&amp; (bytesTransferred > 0))
+            _onRead(boost::ref(_serialPort.get_io_service()), 
+                boost::cref(_readBuffer), bytesTransferred);
+        ReadBegin();  // queue another read
+    } else {
+        Close();
+        SetErrorCode(ec);
+    }
+}
+</pre>
+</div>
+
+<p>On the other hand, data can be written from multiple threads, so a synchronized, two-buffer approach is used.  The
+write buffer contains the data that is currently being written to the serial port.  A serial port is not a shareable
+device &mdash; if a write is in progress, another cannot be started until the first has completed <a href="#ref20">[20]</a>.
+The write queue contains pending data that will
+be written.  Data is appended to the write queue, and then moved to the write buffer, when the serial port is available.</p>
+
+<p>The public method <code>Write()</code> obtains a lock on the write queue, copies its data into it, and then
+invokes <code>WriteBegin()</code> asynchronously by posting it to the <code>io_service</code> object to perform the write.
+The caller of <code>Write()</code> can then continue processing and not block while the write is in progress.</p>
+
+<div class="code">
+<pre>
+void ASIOLib::SerialPort::Write(const unsigned char *buffer, 
+    size_t bufferLength) {
+    {
+        boost::mutex::scoped_lock lock(_writeQueueMutex);
+        _writeQueue.insert(_writeQueue.end(), buffer, 
+            buffer+bufferLength);
+    }
+    _serialPort.get_io_service().post(boost::bind(
+        &amp;SerialPort::WriteBegin, shared_from_this()));
+}
+</pre>
+</div>
+
+<p>The <code>WriteBegin()</code> method first checks to see if a write is currently in progress, or if no pending
+bytes remain to be written.  In either case, the method exits.  Otherwise, the bytes in the write queue
+are copied into the write buffer, the write queue is emptied, and <code>boost::asio::async_write()</code> is called to write 
+the contents of the write buffer to the serial port.  When the write completes, <code>WriteComplete()</code> is invoked with the 
+result of the write.</p>
+
+<div class="code">
+<pre>
+void ASIOLib::SerialPort::WriteBegin() {
+    boost::mutex::scoped_lock writeBufferlock(_writeBufferMutex);
+    if (_writeBuffer.size() != 0)
+        return;  // a write is in progress, so don't start another
+
+    boost::mutex::scoped_lock writeQueuelock(_writeQueueMutex);
+    if (_writeQueue.size() == 0)
+        return;  // nothing to write
+
+    // allocate a larger buffer if needed
+    const std::vector&lt;unsigned char&gt;::size_type writeQueueSize = 
+        _writeQueue.size();
+    if (writeQueueSize &gt; _writeBuffer.size()) 
+        _writeBuffer.resize(writeQueueSize);
+
+    // copy the queued bytes to the write buffer, 
+    // and clear the queued bytes
+    std::copy(_writeQueue.begin(), _writeQueue.end(), 
+        _writeBuffer.begin());
+    _writeQueue.clear();
+
+    boost::asio::async_write(_serialPort, 
+        boost::asio::buffer(_writeBuffer, writeQueueSize),
+        boost::bind(&amp;SerialPort::WriteComplete, shared_from_this(), 
+        boost::asio::placeholders::error));
+}
+</pre>
+</div>
+
+<p>If the write completed without error, then the write buffer is cleared.  As shown above, <code>WriteBegin()</code> uses a non-zero
+size of the write buffer to indicate that 
+a write is still in progress.  <code>WriteBegin()</code> is then called in case any bytes had been added to the write queue
+while the previous write was in progress, so they, too, can be written to the serial port.</p>
+
+<div class="code">
+<pre>
+void ASIOLib::SerialPort::WriteComplete(
+    const boost::system::error_code &amp;ec) {
+    if (!ec) {
+        {
+            boost::mutex::scoped_lock lock(_writeBufferMutex);
+            _writeBuffer.clear();
+        }
+        // more bytes to send may have arrived while the write 
+        // was in progress, so check again
+        WriteBegin();  
+    } else {
+        Close();
+        SetErrorCode(ec);
+    }
+}
+</pre>
+</div>
+
+<p>The constructor of <code>SerialPort</code> constructs the <code>boost::asio::serial_port</code>, plus allocates the read buffer.
+The name of the port is provided in a system-dependent syntax.  For example, under Windows, <code>\\.\COM1</code>
+would be appropriate, but under Linux, <code>/dev/ttyS0</code> could be used.</p>
+
+<div class="code">
+<pre>
+ASIOLib::SerialPort::SerialPort(boost::asio::io_service &amp;ioService, 
+    const std::string &amp;portName) : 
+    _serialPort(ioService, portName), _isOpen(false) {
+    _readBuffer.resize(128);
+}
+</pre>
+</div>
+
+<p>Opening a serial port consists of setting parameters such as baud rate, flow control, parity, and the like.  The port is 
+then flushed so any current characters are discarded, and, if the user provided an <code>OnRead()</code> callback, an 
+asynchronous read is started.  If no <code>OnRead()</code> callback is supplied, the serial port can still be used for
+writing.</p>
+
+<div class="code">
+<pre>
+void ASIOLib::SerialPort::Open(
+    const boost::function&lt;void (boost::asio::io_service &amp;, 
+    const std::vector&lt;unsigned char&gt; &amp;, size_t)&gt; &amp;onRead,
+    unsigned int baudRate,
+    ASIOLib::SerialParams serialParams,
+    boost::asio::serial_port_base::flow_control flowControl) {
+        _onRead = onRead;
+        _serialPort.set_option(
+            boost::asio::serial_port_base::baud_rate(baudRate));
+        _serialPort.set_option(serialParams.get&lt;0&gt;());
+        _serialPort.set_option(serialParams.get&lt;1&gt;());
+        _serialPort.set_option(serialParams.get&lt;2&gt;());
+        _serialPort.set_option(flowControl);
+
+        const boost::system::error_code ec = Flush();
+        if (ec)
+            SetErrorCode(ec);
+
+        _isOpen = true;
+
+        if (_onRead)
+            _serialPort.get_io_service().post(boost::bind(
+                &amp;SerialPort::ReadBegin, shared_from_this()));
+}
+</pre>
+</div>
+
+<p>The destructor simply closes the serial port.</p>
+
+<div class="code">
+<pre>
+ASIOLib::SerialPort::~SerialPort() {
+    Close();
+}
+</pre>
+</div>
+
+<p>To close a port, outstanding requests are cancelled first, and then the port itself is closed.</p>
+
+<div class="code">
+<pre>
+void ASIOLib::SerialPort::Close() {
+    if (_isOpen) {
+        _isOpen = false;
+        boost::system::error_code ec;
+        _serialPort.cancel(ec);
+        SetErrorCode(ec);
+        _serialPort.close(ec);
+        SetErrorCode(ec);
+    }
+}
+</pre>
+</div>
+
+
+<p>Finally, two other variants of the <code>Write()</code> method are given, to provide additional calling options
+to the user.</p>
+
+<div class="code">
+<pre>
+void ASIOLib::SerialPort::Write(
+    const std::vector&lt;unsigned char&gt; &amp;buffer) {
+    Write(&amp;buffer[0], buffer.size());
+}
+
+void ASIOLib::SerialPort::Write(const std::string &amp;buffer) {
+    Write(reinterpret_cast&lt;const unsigned char *&gt;(buffer.c_str()), 
+        buffer.size());
+}
+</pre>
+</div>
+
+<p>This completes <code>ASIOLib</code>, and we can now use it to read data from a serial port.</p>
+
+<h2>Reading from a GPS Receiver</h2>
+
+<p>We can now use <code>ASIOLib</code> to implement an application that reads data from the serial port, displays it to the
+user, and optionally saves it to a file for later playback.  A Pharos GPS-360 receiver will be used to generate serial data.</p>
+
+<p>The headers included in <code>SerialReader</code> show additional Boost libraries that will be used.</p>
+
+<div class="code">
+<pre>
+// SerialReader.cpp
+#include "../ASIOLib/Executor.h"
+#include "../ASIOLib/SerialPort.h"
+#include &lt;boost/thread.hpp&gt;
+#include &lt;boost/date_time.hpp&gt;
+#include &lt;boost/program_options.hpp&gt;
+#include &lt;boost/archive/text_oarchive.hpp&gt;
+#include &lt;boost/serialization/vector.hpp&gt;
+</pre>
+</div>
+
+<p>These Boost libraries include Date_Time <a href="#ref21">[21]</a>
+which provides time handling and calendar functionality, Program_options <a href="#ref22">[22]</a>
+to parse command-line options, and Serialization <a href="#ref23">[23]</a>
+to write data to portable archive files.</p>
+
+<p>A logging helper is handy to display messages from threads, to ensure the output is not interleaved
+on the console.</p>
+
+<div class="code">
+<pre>
+boost::mutex cout_lock;
+void Log(const std::string &amp;msg) {
+    boost::mutex::scoped_lock lock(cout_lock);
+    std::cout &lt;&lt; "[" &lt;&lt; boost::this_thread::get_id() &lt;&lt; "] " &lt;&lt; 
+        msg &lt;&lt; std::endl;
+}
+</pre>
+</div>
+
+<p>The <code>main()</code> function uses Program_options to parse the command-line options.  The available options are
+specified in a <code>boost::program_options::options_description</code> object.  Each option has both a long
+name, e.g., <i>help</i>, as well as a single letter alias, e.g., <i>h</i>, and a text description of the purpose of the option.
+Each option definition that requires an argument has an additional parameter, <code>boost::program_options::value&lt;&gt;</code>,
+to indicate the data type of the option, as well as additional flags, such as if the option must be provided.</p>
+
+<div class="code">
+<pre>
+int main(int argc, char *argv[]) {
+    std::string portName, file;
+    int baudRate;
+    boost::program_options::options_description desc("Options");
+    desc.add_options()
+        ("help,h", "help")
+        ("port,p", boost::program_options::value&lt;std::string&gt;(
+            &amp;portName)-&gt;required(), "port name (required)")
+        ("baud,b", boost::program_options::value&lt;int&gt;(
+            &amp;baudRate)-&gt;required(), "baud rate (required)")
+        ("file,f", boost::program_options::value&lt;std::string&gt;(
+            &amp;file), "file to save to")
+        ;
+</pre>
+</div>
+
+<p>The <code>parse_command_line()</code> function parses the command-line arguments and populates
+a map which can later be queried.</p>
+
+<div class="code">
+<pre>
+    boost::program_options::variables_map vm;
+    boost::program_options::store(
+        boost::program_options::parse_command_line(
+            argc, argv, desc), vm);
+</pre>
+</div>
+
+<p>The first option that is processed is <i>help</i>.  If either <i>help</i>, <i>h</i> or no arguments
+are provided, a list of available options is displayed on the console, and the program exits.</p>
+
+<div class="code">
+<pre>
+    if (vm.empty() || vm.count("help")) {
+        std::cout &lt;&lt; desc &lt;&lt; "\n";
+        return -1;
+    }
+</pre>
+</div>
+
+<p>In order to detect errors, such as missing required parameters, <code>boost::program_options::notify()</code> is called.
+This must be called after processing the <i>help</i> option, however, as it will generate missing required parameter errors even when
+they aren't required by the context <a href="#ref24">[24]</a>
+&mdash; if the user asks for help, they likely do not know what options are available to supply, so a help message should be
+displayed and required options not enforced.</p>
+
+<div class="code">
+<pre>
+    boost::program_options::notify(vm);  
+</pre>
+</div>
+
+<p>By associating variables in the option definition, they are automatically populated by the argument processing.  
+If the <i>file</i> argument was specified, we create a file stream, and, using it, a Boost Serialization archive, 
+to store the data read from the serial port.  These are created as Boost shared pointers as they will not exist when
+the <i>file</i> option is not specified.</p>
+
+<div class="code">
+<pre>
+    const boost::scoped_ptr&lt;std::ostream&gt; out(
+        file.empty() ? 0 : new std::ofstream(file.c_str()));
+    const boost::scoped_ptr&lt;boost::archive::text_oarchive&gt; archive(
+        file.empty() ? 0 : new boost::archive::text_oarchive(*out));
+</pre>
+</div>
+
+<p>We now create an instance of <code>ASIOLib::Executor</code>, and supply lambda functions to handle error callbacks.  
+The Boost.Lexical_Cast <a href="#ref25">[25]</a> library
+provides data type conversion to and from strings.  We are using it here to convert the Boost error code object to a string
+that can be appended to the log message.</p>
+
+<p>We create a <code>SerialReader</code> object as a shared pointer to ensure that it exists for the life of the Asio 
+execution, and to support the use of <code>shared_from_this()</code> &mdash; if the object is not contained within a Boost
+shared pointer, there isn't anything for <code>shared_from_this()</code> to reference.  We associate its <code>Create()</code>
+method with the <code>OnRun()</code> method of the <code>Executor</code>, and then call <code>Run()</code> to start the system.</p>
+
+<div class="code">
+<pre>
+    ASIOLib::Executor e;
+    e.OnWorkerThreadError = [](boost::asio::io_service &amp;, 
+        boost::system::error_code ec) { 
+            Log(std::string("SerialReader error (asio): ") + 
+	            boost::lexical_cast&lt;std::string&gt;(ec)); 
+        };
+    e.OnWorkerThreadException = [](boost::asio::io_service &amp;, 
+        const std::exception &amp;ex) { 
+            Log(std::string("SerialReader exception (asio): ") + 
+	            ex.what()); 
+        };
+
+    const boost::shared_ptr&lt;SerialReader&gt; sp(new SerialReader(
+        portName, baudRate, archive));
+    e.OnRun = boost::bind(&amp;SerialReader::Create, sp, _1);
+    e.Run();
+
+    return 0;
+}
+</pre>
+</div>
+
+<p>The real work of the <code>SerialReader</code> application is performed by the class <code>SerialReader</code>.  
+The constructor stores the port name and baud rate, as well as a pointer to the archive to write.</p>
+
+<div class="code">
+<pre>
+class SerialReader : private boost::noncopyable, 
+    public boost::enable_shared_from_this&lt;SerialReader&gt; {
+    boost::shared_ptr&lt;ASIOLib::SerialPort&gt; _serialPort;
+    std::string _portName;
+    unsigned int _baudRate;
+    const boost::scoped_ptr&lt;boost::archive::text_oarchive&gt; &_oa;
+    boost::posix_time::ptime _lastRead;
+
+    void OnRead(boost::asio::io_service &amp;ios, 
+        const std::vector&lt;unsigned char&gt; &amp;buffer, 
+        size_t bytesRead);
+    
+public:
+    SerialReader(const std::string &amp;portName, int baudRate, 
+        const boost::scoped_ptr&lt;boost::archive::text_oarchive&gt; &oa) : 
+        _portName(portName), _baudRate(baudRate), _oa(oa) {}
+</pre>
+</div>
+
+<p>The <code>Create()</code> method creates a new <code>SerialPort</code> object, and opens it.  The <code>OnRead()</code>
+method of <code>SerialReader</code> is used for the <code>OnRead()</code> callback of the <code>SerialPort</code> object.</p>
+
+<div class="code">
+<pre>
+    void Create(boost::asio::io_service &amp;ios) {
+        try {
+            _serialPort.reset(new ASIOLib::SerialPort(ios,  _portName));  
+            _serialPort->Open(boost::bind(&amp;SerialReader::OnRead, 
+                shared_from_this(), _1, _2, _3), _baudRate);
+        } catch (const std::exception &amp;e) {
+            std::cout &lt;&lt; e.what() &lt;&lt; std::endl;     
+        }
+    }
+};
+</pre>
+</div>
+
+<p>When <code>OnRead()</code> is called with data that has been read from the port, the current time is obtained by using
+the Boost.Date_Time library.  The <code>_lastRead</code> variable stores the last time data was read from the port, 
+but is automatically set to the special value <code>boost::posix_time::not_a_date_time</code> if it has not yet been
+initialized.  If this is the case, the current time is set as the last read time.</p>
+
+<div class="code">
+<pre>
+void SerialReader::OnRead(boost::asio::io_service &amp;, 
+    const std::vector&lt;unsigned char&gt; &amp;buffer, size_t bytesRead) {
+    const boost::posix_time::ptime now = 
+        boost::posix_time::microsec_clock::universal_time();
+
+    if (_lastRead == boost::posix_time::not_a_date_time)
+        _lastRead = now;
+</pre>
+</div>
+
+<p>Next, a local copy of the data read is created.  As a fixed buffer size is used in <code>SerialPort</code>, the 
+number of bytes read may be less than the total buffer size, so only the bytes that are read are copied.</p> 
+
+<div class="code">
+<pre>
+    const std::vector&lt;unsigned char&gt; v(buffer.begin(), 
+        buffer.begin()+bytesRead);  
+</pre>
+</div>
+
+<p>If an archive was provided, the time between the current and previous reads is written to it, followed by the
+data.  The Serialization library allows the standard insertion and extraction operators to be used with
+archives in the same manner as they are used with streams.</p>
+
+<div class="code">
+<pre>
+    if (_oa) {      
+        const uint64_t offset = (now-_lastRead).total_milliseconds();
+        *_oa &lt;&lt; offset &lt;&lt; v;
+    }
+    _lastRead = now;    
+</pre>
+</div>
+
+<p>Lastly, the characters that were read from the port are displayed on the screen.  In the general case, this is 
+not feasible, as the data from a serial port is not guaranteed to be ASCII, but it works in our context, as the NMEA 0183 data specification
+guarantees ASCII strings will be sent from the GPS device.</p>
+
+<div class="code">
+<pre>
+    std::copy(v.begin(), v.end(), 
+        std::ostream_iterator&lt;unsigned char&gt;(std::cout, ""));
+}
+</pre>
+</div>
+
+<p>Under Windows, <code>SerialReader</code> can be run as follows:</p>
+
+<div class="code">
+<pre>
+&gt; SerialReader -p \\.\COM16 -b 4800
+</pre>
+</div>
+
+<p>and under Linux as:</p>
+
+<div class="code">
+<pre>
+$ ./SerialReader -p /dev/ttyUSB0 -b 4800
+</pre>
+</div>
+
+<p>as the GPS receiver is connected via USB, rather than to a physical serial port.</p>
+
+<p>When running, text such as the following is displayed on the console:</p>
+
+<div class="code">
+<pre>
+...
+$GPGGA,191644.608,3848.3643,N,09018.2853,W,1,05,2.8,128.2,M,-33.7,M,0.0,0000*44
+$GPGLL,3848.3643,N,09018.2853,W,191644.608,A*2E
+$GPGSA,A,3,18,15,21,06,09,,,,,,,,3.7,2.8,2.3*3C
+$GPRMC,191644.608,A,3848.3643,N,09018.2853,W,34.909700,55.51,150113,,*1A
+$GPGGA,191645.608,3848.3698,N,09018.2749,W,1,06,1.3,127.9,M,-33.7,M,0.0,0000*48
+$GPGLL,3848.3698,N,09018.2749,W,191645.608,A*2D
+$GPGSA,A,3,18,15,29,21,06,09,,,,,,,2.2,1.3,1.8*33
+$GPGSV,3,1,10,18,62,311,37,15,47,49,40,14,17,219,26,29,11,186,30*44
+$GPGSV,3,2,10,22,30,282,0,21,85,221,35,24,34,119,23,6,24,295,33*7C
+...
+</pre>
+</div>
+
+<p>The file <code>Tests/gps_2013-01-15_0106</code>, included in the 
+<a href="http://www.ociweb.com/mnb/code/mnb201303-code.zip">code archive</a> that is
+associated with this article, is an archive of a serial port capture from this GPS receiver 
+that spans about 10 minutes of time, from device initialization through driving on several miles of
+city streets.</p>
+
+<h2>Simulating the GPS Receiver</h2>
+
+<p>For reproducibility in testing, it is useful to be able to play back a capture from the GPS
+receiver.  We next develop an application, <code>SerialWriter</code>, which reads the Boost.Serialization archive and writes
+it out to the serial port.</p>
+
+<p>As before, command-line arguments are processed by the Program_options library.  Also as before, the port name and baud rate
+must be specified.  Either a literal message, or an archive file, needs to also be provided to be used for the data to send
+over the port.  When a file is specified, by default, data from an archive file is replayed at the rate that it was captured, 
+but the <i>no_time_offsets</i>
+option will cause all of the data to be sent at one time.  As this command-line option is a flag and does not take parameters,
+the <code>zero_tokens()</code> attribute is specified.</p>
+
+<div class="code">
+<pre>
+// SerialWriter/SerialWriter.cpp
+int main(int argc, char *argv[]) {
+    try {
+        std::string portName, message, file;
+        int baudRate;
+        bool noTimeOffsets = false;
+
+        boost::program_options::options_description desc("Options");
+        desc.add_options()
+            ("help,h", "help")
+            ("port,p", boost::program_options::value&lt;std::string&gt;(
+                &amp;portName)-&gt;required(), "port name (required)")
+            ("baud,b", boost::program_options::value&lt;int&gt;(
+                &amp;baudRate)-&gt;required(), "baud rate (required)")
+            ("message,m", boost::program_options::value&lt;std::string&gt;(
+                &amp;message), "message to send")
+            ("file,f", boost::program_options::value&lt;std::string&gt;(
+                &amp;file), "file to send")
+            ("no_time_offsets,n", boost::program_options::value&lt;bool&gt;(
+                &amp;noTimeOffsets)-&gt;zero_tokens(), 
+                "ignore time offsets in files to send data "
+                "as fast as possible")
+            ;
+    
+        boost::program_options::variables_map vm;
+        boost::program_options::store(
+            boost::program_options::parse_command_line(
+                argc, argv, desc), vm);
+
+        if (vm.empty() || vm.count("help")) {
+            std::cout &lt;&lt; desc &lt;&lt; "\n";
+            return -1;
+        }
+
+        boost::program_options::notify(vm);  
+</pre>
+</div>
+
+<p>The data to send is collected in a write buffer...</p>
+
+<div class="code">
+<pre>
+        std::vector&lt;WriteBufferElement&gt; writeBuffer;
+</pre>
+</div>
+
+<p>...where each element of the buffer is a tuple pairing the time between writes and the data to be written, as defined
+elsewhere in the file.</p>
+
+<div class="code">
+<pre>
+typedef boost::tuple&lt;boost::posix_time::time_duration::tick_type, 
+    std::vector&lt;unsigned char&gt;&gt; WriteBufferElement;
+</pre>
+</div>
+    
+<p>If a message to send is provided on the command line, it is set as the one entry in the write buffer to be sent 
+immediately (at a time of 0).</p>
+
+<div class="code">
+<pre>
+        if (!message.empty()) {
+            std::vector&lt;unsigned char&gt; v;
+            std::copy(message.begin(), message.end(), 
+                std::back_insert_iterator&lt;std::vector&lt;unsigned char&gt;&gt;(v));
+            writeBuffer.push_back(boost::make_tuple(0, v));
+        }
+</pre>
+</div>
+
+<p>If an archive file is supplied, it is read and each entry in the file becomes one element in the write buffer.  
+An exception is thrown when the end of the archive is reached, so it is caught and ignored.</p>
+
+<div class="code">
+<pre>
+        if (!file.empty()) {
+            std::ifstream in(file);
+            boost::archive::text_iarchive ia(in);
+            while (true) {
+                try {
+                    WriteBufferElement e;
+                    uint64_t us;                    
+                    ia &gt;&gt; us &gt;&gt; e.get&lt;1&gt;();
+                    e.get&lt;0&gt;() = us;
+                    writeBuffer.push_back(e);
+                } catch (const std::exception &amp;) {
+                    // end of archive - ignore exception
+                    break;
+                }
+            }
+        }
+</pre>
+</div>
+
+<p>The invocation of the <code>Executor</code> is similar to that of <code>SerialReader</code>, except that a <code>SerialWriter</code>
+object is constructed.</p>
+
+<div class="code">
+<pre>
+        ASIOLib::Executor e;
+        e.OnWorkerThreadError = [](boost::asio::io_service &amp;, 
+            boost::system::error_code ec) { 
+                Log(std::string("SerialWriter error (asio): ") + 
+                    boost::lexical_cast&lt;std::string&gt;(ec)); };
+        e.OnWorkerThreadException = [](boost::asio::io_service &amp;, 
+            const std::exception &amp;ex) { 
+                Log(std::string("SerialWriter exception (asio): ") + 
+                    ex.what()); };
+        const boost::shared_ptr&lt;SerialWriter&gt; spd(new SerialWriter(
+            portName, baudRate, writeBuffer, noTimeOffsets));
+        e.OnRun = boost::bind(&amp;SerialWriter::Create, spd, _1);
+        e.Run();
+    } catch (const std::exception &amp;e) {
+        std::cout &lt;&lt; "SerialWriter exception (main): " &lt;&lt; e.what() &lt;&lt; 
+            std::endl;
+        return -1;
+    }
+    return 0;
+}
+</pre>
+</div>
+
+<p>The constructor of <code>SerialWriter</code> stores parameters from <code>main()</code>, and the work occurs entirely
+in the <code>Create()</code> method.</p>
+
+<div class="code">
+<pre>
+class SerialWriter : private boost::noncopyable, 
+    public boost::enable_shared_from_this&lt;SerialWriter&gt; {
+    boost::shared_ptr&lt;ASIOLib::SerialPort&gt; _serialPort;
+    std::string _portName;
+    unsigned int _baudRate;
+    std::vector&lt;WriteBufferElement&gt; _writeBuffer;
+    bool _noTimeOffsets;
+public:
+    SerialWriter(const std::string &amp;portName, int baudRate, 
+        const std::vector&lt;WriteBufferElement&gt; &amp;writeBuffer, 
+        bool noTimeOffsets) :
+        _portName(portName), _baudRate(baudRate), 
+        _writeBuffer(writeBuffer), _noTimeOffsets(noTimeOffsets) {}
+</pre>
+</div>
+
+<p>In <code>Create()</code>, a <code>SerialPort</code> object is instantiated and opened.</p>
+
+<div class="code">
+<pre>
+    void Create(boost::asio::io_service &amp;ios) {
+        _serialPort.reset(new ASIOLib::SerialPort(ios,  _portName));  
+        _serialPort->Open(0, _baudRate);
+</pre>
+</div>
+
+<p>Next, we define a function to post to <code>io_service</code> to execute.  
+Each of the items in the write buffer is written to the serial port.  If the <i>no_time_offsets</i> option is specified, the buffer is 
+written immediately.  Otherwise, we maintain a running sum of the differences between buffer entries to obtain the time in the future that
+any given sequence of bytes is to be written.  Asio provides deadline timers which expire at a specified time and, upon expiration, execute
+a callback function.  That callback function we also define as a lambda, which simply writes the particular byte sequence to the port.</p>
+
+<div class="code">
+<pre>
+        ios.post([=, &amp;ios] {
+            uint64_t startTime = 0;
+            std::for_each(_writeBuffer.begin(), _writeBuffer.end(), 
+                [&amp;](const WriteBufferElement &amp;e) {
+                    // if noTimeOffsets, just write the buffer, 
+                    // otherwise create a timer to write the buffer 
+                    // in the future
+                    if (_noTimeOffsets)
+                        _serialPort->Write(e.get&lt;1&gt;());
+                    else {
+                        startTime += e.get&lt;0&gt;();
+                        const boost::shared_ptr&lt;
+                            boost::asio::deadline_timer&gt; timer(
+                                new boost::asio::deadline_timer(ios));
+                        timer->expires_from_now(
+                            boost::posix_time::milliseconds(startTime));
+                        timer->async_wait([=](
+                            const boost::system::error_code &amp;ec) { 
+	                        // keep the timer object alive
+                            boost::shared_ptr&lt;
+                                boost::asio::deadline_timer&gt; t(timer); 
+                            _serialPort->Write(e.get&lt;1&gt;()); 
+                        });
+                    }
+                }
+            );
+        });
+    }
+}; 
+</pre>
+</div>
+
+<p>The <code>SerialWriter</code> can be demonstrated by using a virtual serial port pair.  Under Windows, the
+com0com null-modem emulator <a href="#ref26">[26]</a>
+can be used.  After installation, by default two virtual ports are created named \\.\CNCA0 and \\.\CNCB0.  Serial data
+that is written to one port is read from the other.  While this works well, it should be noted that to install it under
+64-bit Windows requires Windows to be placed into a driver testing mode that removes security checks.  This may not
+be suitable for all environments.  As described in the installation instructions <a href="#ref27">[27]</a> for the version
+current as of this writing (3.0.0.0), installation requires enabling the use of test-signed drivers by executing the following at a command prompt:</p>
+
+<div class="code">
+<pre>
+> bcdedit -set TESTSIGNING ON
+</pre>
+</div>
+
+<p>and rebooting the computer.</p>
+
+<p>Under Linux, one can use <code>socat</code> in a similar manner, but as it is a user-mode process, does not pose a potential security risk
+<a href="#ref28">[28]</a>.  Specifically, executing the following at a prompt
+creates two virtual serial ports that exist as long as <code>socat</code> remains running.  The particular ports created
+may be different from run to run.  In this example, the created ports are <code>/dev/pts/4</code> and <code>/dev/pts/6</code>.</p>
+
+<div class="code">
+<pre>
+$ socat -d -d pty,raw,echo=0 pty,raw,echo=0
+2013/01/18 13:29:42 socat[3378] N PTY is /dev/pts/4
+2013/01/18 13:29:42 socat[3378] N PTY is /dev/pts/6
+2013/01/18 13:29:42 socat[3378] N starting data transfer loop with 
+    FDs [4,4] and [6,6]
+</pre>
+</div>
+
+<p>Opening a terminal connection to one port, such as with <code>putty</code> <a href="#ref29">[29]</a> under Windows, 
+and executing <code>SerialWriter</code>
+to write to the other will show the data played back in the terminal window.</p>
+
+
+<h2>Conclusion</h2>
+
+<p>This article has shown that writing platform-independent code that interacts with the serial port
+is possible using Boost, and that Boost Asio can be used as the core of a highly scalable application. 
+In part II of this article series, we will show how to decode the GPS data, and publish it as OpenDDS samples.</p>
+
+
+<h2>References</h2>
+
+<p><a name="ref1">[1]</a> RS-232<br/>
+<a href="http://en.wikipedia.org/wiki/RS-232">http://en.wikipedia.org/wiki/RS-232</a></p>
+
+<p><a name="ref2">[2]</a> Serial port<br/>
+<a href="http://en.wikipedia.org/wiki/Serial_port">http://en.wikipedia.org/wiki/Serial_port</a></p>
+
+<p><a name="ref3">[3]</a> NMEA 0183<br/>
+<a href="http://en.wikipedia.org/wiki/NMEA_0183">http://en.wikipedia.org/wiki/NMEA_0183</a></p>
+
+<p><a name="ref4">[4]</a> OpenDDS<br/>
+<a href="http://www.ociweb.com/products/opendds">http://www.ociweb.com/products/opendds</a></p>
+
+<p><a name="ref5">[5]</a> MPC (The Makefile, Project, and Workspace Creator)<br/>
+<a href="http://www.ociweb.com/products/mpc">http://www.ociweb.com/products/mpc</a></p>
+
+<p><a name="ref6">[6]</a> Boost.Asio<br/>
+<a href="http://www.boost.org/doc/libs/1_53_0/doc/html/boost_asio.html">http://www.boost.org/doc/libs/1_53_0/doc/html/boost_asio.html</a></p>
+
+<p><a name="ref7">[7]</a> Boost C++ Libraries<br/>
+<a href="http://www.boost.org/">http://www.boost.org/</a></p>
+
+<p><a name="ref8">[8]</a> Boost FAQ<br/>
+<a href="http://www.boost.org/users/faq.html">http://www.boost.org/users/faq.html</a></p>
+
+<p><a name="ref9">[9]</a> A guide to getting started with boost::asio<br/>
+<a href="http://www.gamedev.net/blog/950/entry-2249317-a-guide-to-getting-started-with-boostasio">http://www.gamedev.net/blog/950/entry-2249317-a-guide-to-getting-started-with-boostasio</a></p>
+
+<p><a name="ref10">[10]</a> Serial ports and C++<br/>
+<a href="http://www.webalice.it/fede.tft/serial_port/serial_port.html">http://www.webalice.it/fede.tft/serial_port/serial_port.html</a></p>
+
+<p><a name="ref11">[11]</a> C++ Programming using Boost<br/>
+<a href="http://www.ociweb.com/training/C++-Programming-using-Boost">http://www.ociweb.com/training/C++-Programming-using-Boost</a></p>
+
+<p><a name="ref12">[12]</a> The Proactor Design Pattern: Concurrency Without Threads<br/>
+<a href="http://www.boost.org/doc/libs/1_53_0/doc/html/boost_asio/overview/core/async.html">http://www.boost.org/doc/libs/1_53_0/doc/html/boost_asio/overview/core/async.html</a></p>
+
+<p><a name="ref13">[13]</a> Proactor An Object Behavioral Pattern for Demultiplexing and Dispatching Handlers for Asynchronous Events<br/>
+<a href="http://www.cs.wustl.edu/~schmidt/PDF/proactor.pdf">http://www.cs.wustl.edu/~schmidt/PDF/proactor.pdf</a></p>
+
+<p><a name="ref14">[14]</a> Boost.Function<br/>
+<a href="http://www.boost.org/doc/libs/1_53_0/doc/html/function.html">http://www.boost.org/doc/libs/1_53_0/doc/html/function.html</a></p>
+
+<p><a name="ref15">[15]</a> Boost.Thread<br/>
+<a href="http://www.boost.org/doc/libs/1_53_0/doc/html/thread.html">http://www.boost.org/doc/libs/1_53_0/doc/html/thread.html</a></p>
+
+<p><a name="ref16">[16]</a> bind.hpp<br/>
+<a href="http://www.boost.org/doc/libs/1_53_0/libs/bind/bind.html">http://www.boost.org/doc/libs/1_53_0/libs/bind/bind.html</a></p>
+
+<p><a name="ref17">[17]</a> The Boost Tuple Library<br/>
+<a href="http://www.boost.org/doc/libs/1_53_0/libs/tuple/doc/tuple_users_guide.html">http://www.boost.org/doc/libs/1_53_0/libs/tuple/doc/tuple_users_guide.html</a></p>
+
+<p><a name="ref18">[18]</a> Smart Pointers<br/>
+<a href="http://www.boost.org/doc/libs/1_53_0/libs/smart_ptr/smart_ptr.htm">http://www.boost.org/doc/libs/1_53_0/libs/smart_ptr/smart_ptr.htm</a></p>
+
+<p><a name="ref19">[19]</a> How for boost:: asio:: serial_port to make flush?<br/>
+<a href="http://www.progtown.com/topic90228-how-for-boost-asio-serialport-to-make-flush.html">http://www.progtown.com/topic90228-how-for-boost-asio-serialport-to-make-flush.html</a></p>
+
+<p><a name="ref20">[20]</a> Boost async_write problem<br/>
+<a href="http://stackoverflow.com/questions/4994077/boost-async-write-problem">http://stackoverflow.com/questions/4994077/boost-async-write-problem</a></p>
+
+<p><a name="ref21">[21]</a> Boost.Date_Time<br/>
+<a href="http://www.boost.org/doc/libs/1_53_0/doc/html/date_time.html">http://www.boost.org/doc/libs/1_53_0/doc/html/date_time.html</a></p>
+
+<p><a name="ref22">[22]</a> Boost.Program_options<br/>
+<a href="http://www.boost.org/doc/libs/1_53_0/doc/html/program_options.html">http://www.boost.org/doc/libs/1_53_0/doc/html/program_options.html</a></p>
+
+<p><a name="ref23">[23]</a> Serialization Overview<br/>
+<a href="http://www.boost.org/doc/libs/1_53_0/doc/html/program_options.html">http://www.boost.org/doc/libs/1_53_0/doc/html/program_options.html</a></p>
+
+<p><a name="ref24">[24]</a> Required and Optional Arguments Using Boost Library Program Options<br/>
+<a href="http://stackoverflow.com/questions/5395503/required-and-optional-arguments-using-boost-library-program-options">http://stackoverflow.com/questions/5395503/required-and-optional-arguments-using-boost-library-program-options</a></p>
+
+<p><a name="ref25">[25]</a> Boost.Lexical_Cast 1.0<br/>
+<a href="http://www.boost.org/doc/libs/1_53_0/doc/html/boost_lexical_cast.html">http://www.boost.org/doc/libs/1_53_0/doc/html/boost_lexical_cast.html</a></p>
+
+<p><a name="ref26">[26]</a> Null-modem emulator (com0com)<br/>
+<a href="http://com0com.sourceforge.net/">http://com0com.sourceforge.net/</a></p>
+
+<p><a name="ref27">[27]</a> Null-modem emulator (com0com) ReadMe.txt<br/>
+<a href="http://com0com.cvs.sourceforge.net/viewvc/com0com/com0com/ReadMe.txt?revision=RELEASED">http://com0com.cvs.sourceforge.net/viewvc/com0com/com0com/ReadMe.txt?revision=RELEASED</a></p>
+
+<p><a name="ref28">[28]</a> HowTo: Virtual Serial Ports on Linux using socat, and more<br/>
+<a href="http://justcheckingonall.wordpress.com/2009/06/09/howto-vsp-socat/">http://justcheckingonall.wordpress.com/2009/06/09/howto-vsp-socat/</a></p>
+
+<p><a name="ref29">[29]</a> PuTTY Download Page<br/>
+<a href="http://www.chiark.greenend.org.uk/~sgtatham/putty/download.html">http://www.chiark.greenend.org.uk/~sgtatham/putty/download.html</a></p>
+
+
+
+<!--
+<a href="#ref13">[13]</a>
+-->
+<!-- tbd: Stop the Middleware News Brief here -->
+
+<hr class="Color" />
+<!--#include virtual="./includes/services.html"-->
+<hr class="Color" />
+<!--#include virtual="./includes/footer.html"-->
+<hr class="Color" />
+<!--#include virtual="./includes/copyright2009.html"-->
+<div class="quicklinks">
+<a href="#top">Top</a>
+</div>
+</body>
+</html>
+
+
+
+
+
+
+

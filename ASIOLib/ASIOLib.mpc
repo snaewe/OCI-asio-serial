@@ -1,0 +1,4 @@
+project : acelib, asio_base  {
+	sharedname = ASIOLib
+	macros += ASIOLIB_BUILD_DLL
+}
